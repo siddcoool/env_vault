@@ -1,7 +1,12 @@
 import { EnvVaultApp } from "./EnvVaultApp";
 import { getProjectsFromDb } from "./actions";
+import { AppGate } from "./AppGate";
 
 export default async function Home() {
   const projects = await getProjectsFromDb();
-  return <EnvVaultApp initialProjects={projects} />;
+  return (
+    <AppGate>
+      <EnvVaultApp initialProjects={projects} />
+    </AppGate>
+  );
 }
