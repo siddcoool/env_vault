@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 
 interface EnvEditorProps {
   value: string;
@@ -6,6 +6,9 @@ interface EnvEditorProps {
 }
 
 export const EnvEditor: React.FC<EnvEditorProps> = ({ value, onChange }) => {
+  const preRef = useRef<HTMLPreElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
   const renderLine = (line: string, index: number) => {
     // Comments
     if (line.trim().startsWith("#")) {
@@ -41,18 +44,29 @@ export const EnvEditor: React.FC<EnvEditorProps> = ({ value, onChange }) => {
     </React.Fragment>
   ));
 
+  const handleScroll: React.UIEventHandler<HTMLTextAreaElement> = (e) => {
+    const target = e.currentTarget;
+    if (preRef.current) {
+      preRef.current.scrollTop = target.scrollTop;
+      preRef.current.scrollLeft = target.scrollLeft;
+    }
+  };
+
   return (
     <div className="absolute inset-0">
       <pre
+        ref={preRef}
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 w-full h-full p-6 font-mono text-sm bg-white dark:bg-slate-950 text-gray-800 dark:text-gray-300 whitespace-pre-wrap break-words leading-relaxed custom-scrollbar"
+        className="pointer-events-none absolute inset-0 w-full h-full p-6 font-mono text-sm bg-white dark:bg-slate-950 text-gray-800 dark:text-gray-300 whitespace-pre-wrap break-words leading-relaxed overflow-auto no-scrollbar"
       >
         {highlighted}
       </pre>
       <textarea
-        className="absolute inset-0 w-full h-full p-6 font-mono text-sm bg-transparent text-transparent caret-primary-500 dark:caret-primary-400 resize-none focus:outline-none custom-scrollbar leading-relaxed"
+        ref={textareaRef}
+        className="absolute inset-0 w-full h-full p-6 font-mono text-sm bg-transparent text-transparent caret-primary-500 dark:caret-primary-400 resize-none focus:outline-none leading-relaxed overflow-auto no-scrollbar"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onScroll={handleScroll}
         spellCheck={false}
       />
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { ArrowLeft, Save, Plus, FileCode, Trash2, Copy, Check, Info } from "lucide-react";
 import { Project } from "../types";
 import { Button } from "./ui/Button";
@@ -23,26 +23,18 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
   onUpdateEnv,
   onDeleteEnv,
 }) => {
-  const [selectedEnvId, setSelectedEnvId] = useState<string | null>(
-    project.envFiles.length > 0 ? project.envFiles[0].id : null,
-  );
+  const [selectedEnvId, setSelectedEnvId] = useState<string | null>(null);
   const [editorContent, setEditorContent] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newEnvName, setNewEnvName] = useState("");
   const [isDirty, setIsDirty] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    if (selectedEnvId) {
-      const env = project.envFiles.find((e) => e.id === selectedEnvId);
-      if (env) {
-        setEditorContent(env.content);
-        setIsDirty(false);
-      }
-    } else if (project.envFiles.length > 0) {
-      setSelectedEnvId(project.envFiles[0].id);
-    }
-  }, [selectedEnvId, project.envFiles]);
+  const handleSelectEnv = (envId: string, content: string) => {
+    setSelectedEnvId(envId);
+    setEditorContent(content);
+    setIsDirty(false);
+  };
 
   const handleSave = () => {
     if (selectedEnvId) {
@@ -110,7 +102,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
             {project.envFiles.map((env) => (
               <div
                 key={env.id}
-                onClick={() => setSelectedEnvId(env.id)}
+                onClick={() => handleSelectEnv(env.id, env.content)}
                 className={`group flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer text-sm font-medium transition-colors ${
                   selectedEnvId === env.id
                     ? "bg-white dark:bg-slate-800 text-primary-600 dark:text-primary-400 shadow-sm border border-gray-200 dark:border-slate-700"
