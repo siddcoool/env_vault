@@ -1,9 +1,7 @@
 "use client";
 
 import React from "react";
-import { LayoutDashboard, Moon, Sun, Database } from "lucide-react";
-import { useTheme } from "../context/ThemeContext";
-import { Button } from "./ui/Button";
+import { LayoutDashboard, Database } from "lucide-react";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -12,7 +10,6 @@ interface LayoutProps {
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children, onNavigateHome, isHome }) => {
-  const { isDarkMode, toggleTheme } = useTheme();
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-slate-950">
@@ -34,15 +31,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigateHome, isHome
             <LayoutDashboard className="w-5 h-5 mr-3" />
             Projects
           </button>
-        </div>
-
-        <div className="p-4 border-t border-gray-200 dark:border-slate-800">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Theme</span>
-            <Button variant="ghost" size="sm" onClick={toggleTheme} className="!p-2">
-              {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </Button>
-          </div>
         </div>
       </aside>
 
