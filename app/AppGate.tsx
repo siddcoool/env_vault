@@ -57,10 +57,12 @@ export const AppGate: React.FC<AppGateProps> = ({ children }) => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900/80 p-6 shadow-xl">
-        <h1 className="text-lg font-semibold text-slate-50 mb-1">Enter passcode</h1>
-        <p className="text-xs text-slate-400 mb-4">
+    <div className="min-h-dvh flex items-center justify-center bg-slate-950 px-4 py-6 sm:py-8">
+      <div className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900/90 p-5 sm:p-6 shadow-xl">
+        <h1 className="text-base sm:text-lg font-semibold text-slate-50 mb-1 text-center sm:text-left">
+          Enter passcode
+        </h1>
+        <p className="text-[11px] sm:text-xs text-slate-400 mb-4 text-center sm:text-left">
           This workspace is protected. Enter the secret passcode to continue.
         </p>
         <form action={handleSubmit} className="space-y-4">
@@ -76,7 +78,7 @@ export const AppGate: React.FC<AppGateProps> = ({ children }) => {
                 id="passcode"
                 name="passcode"
                 type={showPasscode ? "text" : "password"}
-                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 pr-9 text-sm text-slate-100 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+              className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2.5 pr-9 text-sm text-slate-100 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                 autoComplete="off"
                 autoFocus
                 required
@@ -84,7 +86,7 @@ export const AppGate: React.FC<AppGateProps> = ({ children }) => {
               <button
                 type="button"
                 onClick={() => setShowPasscode((prev) => !prev)}
-                className="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-500 hover:text-slate-200"
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 hover:text-slate-200"
                 aria-label={showPasscode ? "Hide passcode" : "Show passcode"}
               >
                 {showPasscode ? (
@@ -96,7 +98,7 @@ export const AppGate: React.FC<AppGateProps> = ({ children }) => {
             </div>
           </div>
 
-          {error && <p className="text-xs text-red-400">{error}</p>}
+          {error && <p className="text-xs text-red-400 text-center sm:text-left">{error}</p>}
 
           <button
             type="submit"

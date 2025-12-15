@@ -87,7 +87,7 @@ export async function createEnvFileAction(formData: FormData) {
 
   const envId = new Types.ObjectId().toString();
   const now = new Date().toISOString();
-  const defaultContent = "# Environment Variables\n\nAPI_KEY=";
+  const defaultContent = "";
   const encrypted = encrypt(defaultContent);
 
   await ProjectModel.updateOne(
