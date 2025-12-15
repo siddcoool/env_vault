@@ -6,6 +6,7 @@ import { Project } from "../types";
 import { Button } from "./ui/Button";
 import { Modal } from "./ui/Modal";
 import { Input } from "./ui/Input";
+import { EnvEditor } from "./EnvEditor";
 
 interface ProjectDetailProps {
   project: Project;
@@ -166,14 +167,12 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                 </div>
               </div>
               <div className="flex-1 relative">
-                <textarea
-                  className="absolute inset-0 w-full h-full p-6 font-mono text-sm bg-white dark:bg-slate-950 text-gray-800 dark:text-gray-300 resize-none focus:outline-none custom-scrollbar leading-relaxed"
+                <EnvEditor
                   value={editorContent}
-                  onChange={(e) => {
-                    setEditorContent(e.target.value);
+                  onChange={(val) => {
+                    setEditorContent(val);
                     setIsDirty(true);
                   }}
-                  spellCheck={false}
                 />
               </div>
             </>
