@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "EnvVault",
+  title: "Env Vault",
   description: "EnvVault is a tool for managing environment variables for your projects",
 };
 
