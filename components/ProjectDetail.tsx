@@ -99,7 +99,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        <div className="w-64 border-r border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-925 overflow-y-auto custom-scrollbar flex-shrink-0">
+        <div className="w-64 border-r border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950 overflow-y-auto custom-scrollbar flex-shrink-0">
           <div className="p-3 space-y-1">
             {project.envFiles.length === 0 && (
               <div className="text-center py-8 px-4">
