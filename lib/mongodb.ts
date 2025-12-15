@@ -12,6 +12,9 @@ let clientPromise: Promise<MongoClient> | null = null;
 
 export async function getMongoClient(): Promise<MongoClient> {
   if (!clientPromise) {
+    if (!uri) {
+      throw new Error("MONGODB_URI environment variable is not set");
+    }
     client = new MongoClient(uri);
     clientPromise = client.connect();
   }

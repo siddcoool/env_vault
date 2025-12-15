@@ -11,6 +11,10 @@ let isConnected = false;
 export async function connectDb() {
   if (isConnected) return;
 
+  if (!MONGODB_URI) {
+    throw new Error("MONGODB_URI environment variable is not set");
+  }
+
   await mongoose.connect(MONGODB_URI, {
     dbName: process.env.MONGODB_DB || "envvault",
   });
