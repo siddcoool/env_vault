@@ -3,9 +3,9 @@
 import React, { useState } from "react";
 import { ArrowLeft, Save, Plus, FileCode, Trash2, Copy, Check, Info } from "lucide-react";
 import { Project } from "../types";
-import { Button } from "./ui/Button";
+import { Button } from "./ui/button";
 import { Modal } from "./ui/Modal";
-import { Input } from "./ui/Input";
+import { Input } from "./ui/input";
 import { EnvEditor } from "./EnvEditor";
 
 interface ProjectDetailProps {
@@ -184,14 +184,18 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
         title="Create New Environment File"
       >
         <form onSubmit={handleCreateEnv} className="space-y-4">
-          <Input
-            label="Filename"
-            placeholder="e.g., .env.production"
-            value={newEnvName}
-            onChange={(e) => setNewEnvName(e.target.value)}
-            autoFocus
-            required
-          />
+          <div className="w-full">
+            <label className="mb-1 block text-sm font-medium text-foreground">
+              Filename
+            </label>
+            <Input
+              placeholder="e.g., .env.production"
+              value={newEnvName}
+              onChange={(e) => setNewEnvName(e.target.value)}
+              autoFocus
+              required
+            />
+          </div>
           <div className="flex items-start p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-xs text-blue-700 dark:text-blue-300">
             <Info className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
             <p>

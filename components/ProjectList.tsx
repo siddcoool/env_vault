@@ -1,11 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
-import { Plus, FolderOpen, Trash2 } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { Plus, FolderOpen, Trash2, FileCode, Search } from "lucide-react";
 import { Project } from "../types";
-import { Button } from "./ui/Button";
+import { Button } from "./ui/button";
 import { Modal } from "./ui/Modal";
-import { Input } from "./ui/Input";
+import { Input } from "./ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./ui/table";
+import { formatRelativeTime, getProjectUpdatedAt } from "@/lib/project-utils";
 
 interface ProjectListProps {
   projects: Project[];
@@ -23,6 +32,17 @@ export const ProjectList: React.FC<ProjectListProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectDesc, setNewProjectDesc] = useState("");
+  const [search, setSearch] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return projects;
+    return projects.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.description?.toLowerCase().includes(q),
+    );
+  }, [projects, search]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,114 +55,142 @@ export const ProjectList: React.FC<ProjectListProps> = ({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Projects</h1>
-            <p className="mt-1 text-gray-500 dark:text-gray-400">
-              Manage your project environments securely.
-            </p>
-          </div>
+    <div className="flex-1 overflow-y-auto p-6">
+      {/* Header row */}
+      <div className="mb-5 flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight">Projects</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Manage your project environments securely.
+          </p>
+        </div>
+        <Button onClick={() => setIsModalOpen(true)}>
+          <Plus />
+          New Project
+        </Button>
+      </div>
+
+      {/* Search */}
+      <div className="relative mb-4 max-w-sm">
+        <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+        <Input
+          placeholder="Search projects…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-8"
+        />
+      </div>
+
+      {projects.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-24 text-center">
+          <FolderOpen className="mb-3 size-10 text-muted-foreground" />
+          <h3 className="font-medium">No projects yet</h3>
+          <p className="mt-1 text-sm text-muted-foreground mb-5">
+            Create your first project to get started.
+          </p>
           <Button onClick={() => setIsModalOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            New Project
+            <Plus />
+            Create Project
           </Button>
         </div>
-
-        {projects.length === 0 ? (
-          <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-xl border-2 border-dashed border-gray-200 dark:border-slate-800">
-            <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
-              <FolderOpen className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">No projects yet</h3>
-            <p className="mt-1 text-gray-500 dark:text-gray-400 mb-6">
-              Create your first project to get started.
-            </p>
-            <Button onClick={() => setIsModalOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Create Project
-            </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project) => (
-              <div
-                key={project.id}
-                className="group relative bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6 hover:shadow-lg transition-all cursor-pointer hover:border-primary-500 dark:hover:border-primary-500"
-                onClick={() => onSelectProject(project)}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="w-10 h-10 rounded-lg bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center text-primary-600 dark:text-primary-400">
-                    <FolderOpen className="w-5 h-5" />
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (confirm("Are you sure you want to delete this project?"))
-                        onDeleteProject(project.id);
-                    }}
-                    className="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-red-600 transition-opacity"
+      ) : (
+        <div className="rounded-xl border overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50 hover:bg-muted/50">
+                <TableHead className="w-[240px] pl-4">Name</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead className="w-[110px]">Env Files</TableHead>
+                <TableHead className="w-[150px]">Last Updated</TableHead>
+                <TableHead className="w-[52px]" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="py-12 text-center text-muted-foreground">
+                    No projects match &ldquo;{search}&rdquo;
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filtered.map((project) => (
+                  <TableRow
+                    key={project.id}
+                    className="cursor-pointer group"
+                    onClick={() => onSelectProject(project)}
                   >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 truncate">
-                  {project.name}
-                </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-4 h-10">
-                  {project.description || "No description provided."}
-                </p>
-                <div className="flex items-center text-xs text-gray-400 font-mono">
-                  <span className="px-2 py-1 bg-gray-100 dark:bg-slate-800 rounded">
-                    {project.envFiles.length} ENV FILES
-                  </span>
-                  <span className="mx-2">•</span>
-                  <span>{new Date(project.createdAt).toLocaleDateString()}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                    <TableCell className="pl-4 font-medium">
+                      <div className="flex items-center gap-2">
+                        <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
+                        {project.name}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground max-w-xs truncate">
+                      {project.description || (
+                        <span className="opacity-40">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <FileCode className="size-3.5" />
+                        <span className="tabular-nums">{project.envFiles.length}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-xs">
+                      {formatRelativeTime(getProjectUpdatedAt(project))}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm("Delete this project?"))
+                            onDeleteProject(project.id);
+                        }}
+                      >
+                        <Trash2 />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
-        <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Create New Project">
-          <form onSubmit={handleSubmit} className="space-y-4">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Create New Project">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium">Project Name</label>
             <Input
-              label="Project Name"
               placeholder="e.g., My Awesome App"
               value={newProjectName}
               onChange={(e) => setNewProjectName(e.target.value)}
               autoFocus
               required
             />
-            <div className="w-full">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Description
-              </label>
-              <textarea
-                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
-                rows={3}
-                placeholder="Briefly describe your project..."
-                value={newProjectDesc}
-                onChange={(e) => setNewProjectDesc(e.target.value)}
-              />
-            </div>
-            <div className="flex justify-end pt-2">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setIsModalOpen(false)}
-                className="mr-2"
-              >
-                Cancel
-              </Button>
-              <Button type="submit">Create Project</Button>
-            </div>
-          </form>
-        </Modal>
-      </div>
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium">Description</label>
+            <textarea
+              className="w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 resize-none"
+              rows={3}
+              placeholder="Briefly describe your project..."
+              value={newProjectDesc}
+              onChange={(e) => setNewProjectDesc(e.target.value)}
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-1">
+            <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">Create Project</Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };
-
-

@@ -86,7 +86,14 @@ export const EnvVaultApp: React.FC<EnvVaultAppProps> = ({ initialProjects }) => 
 
   return (
     <ThemeProvider>
-      <Layout onNavigateHome={handleNavigateHome} isHome={view === ViewState.DASHBOARD}>
+      <Layout
+        projects={projects}
+        selectedProjectId={currentSelected?.id ?? null}
+        onNavigateHome={handleNavigateHome}
+        onSelectProject={handleSelectProject}
+        isHome={view === ViewState.DASHBOARD}
+        currentProjectName={currentSelected?.name}
+      >
         {view === ViewState.DASHBOARD && (
           <ProjectList
             projects={projects}
