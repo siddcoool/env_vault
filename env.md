@@ -90,7 +90,7 @@ Content-Type: application/json
 
 ### Local folder sync script
 
-Copy `script.js` to your project root, create `.envvault.json` from `.envvault.example.json`, set `ENVVAULT_API_KEY`, then run:
+Copy `script.js` to your project root, create `.envvault.json` from `.envvault.example.json`, add your `apiKey`, then run:
 
 ```bash
 node script.js

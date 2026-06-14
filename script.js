@@ -6,11 +6,12 @@
  *   node script.js
  *
  * Configuration (in order of precedence):
- *   1. Environment variables: ENVVAULT_API_KEY, ENVVAULT_PROJECT, ENVVAULT_BASE_URL
+ *   1. Shell environment variables: ENVVAULT_API_KEY, ENVVAULT_PROJECT, ENVVAULT_BASE_URL
  *   2. .envvault.json in the current directory
  *
  * Example .envvault.json:
  * {
+ *   "apiKey": "evk_your_api_key_here",
  *   "baseUrl": "https://env.classyendeavors.com",
  *   "project": "my-app",
  *   "createProject": true,
@@ -18,7 +19,7 @@
  * }
  *
  * If "files" is omitted, all .env* files in the directory are synced.
- * Set ENVVAULT_API_KEY in your shell — do not commit API keys to git.
+ * Add apiKey to .envvault.json (gitignored) — do not commit API keys to git.
  */
 
 const fs = require("fs");
@@ -60,7 +61,7 @@ function loadConfig(cwd) {
 
   if (!apiKey) {
     throw new Error(
-      "Missing API key. Set ENVVAULT_API_KEY or add apiKey to .envvault.json",
+      "Missing API key. Set ENVVAULT_API_KEY in your shell or add apiKey to .envvault.json",
     );
   }
 

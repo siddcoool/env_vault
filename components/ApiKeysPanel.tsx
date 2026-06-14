@@ -44,7 +44,7 @@ function CopyField({
     <div>
       <label className="mb-1.5 block text-sm font-medium">{label}</label>
       <div className="flex items-start gap-2">
-        <code className="max-h-32 flex-1 overflow-auto rounded border bg-muted p-2 text-xs whitespace-pre-wrap">
+        <code className="max-h-32 min-w-0 flex-1 overflow-y-auto overflow-x-hidden rounded border bg-muted p-2 text-xs break-all whitespace-pre-wrap">
           {value}
         </code>
         <Button variant="outline" size="icon-sm" onClick={handleCopy}>
@@ -169,7 +169,12 @@ export const ApiKeysPanel: React.FC<ApiKeysPanelProps> = ({ apiKeys }) => {
         </Table>
       )}
 
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal} title="Create API Key">
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        title="Create API Key"
+        className={createdCredentials ? "max-w-2xl" : undefined}
+      >
         {createdCredentials ? (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">

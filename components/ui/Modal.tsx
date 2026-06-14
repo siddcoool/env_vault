@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import { X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "./button";
 
 interface ModalProps {
@@ -9,9 +10,16 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  className?: string;
 }
 
-export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
+export const Modal: React.FC<ModalProps> = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  className,
+}) => {
   const modalRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -36,7 +44,10 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div
         ref={modalRef}
-        className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-xl shadow-2xl overflow-hidden transform transition-all"
+        className={cn(
+          "relative w-full max-w-md bg-white dark:bg-slate-900 rounded-xl shadow-2xl overflow-hidden transform transition-all",
+          className,
+        )}
         role="dialog"
         aria-modal="true"
       >
