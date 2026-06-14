@@ -22,7 +22,6 @@ interface ApiKeysPanelProps {
 
 interface CreatedCredentials {
   apiKey: string;
-  privateKey: string;
 }
 
 function CopyField({
@@ -79,11 +78,8 @@ export const ApiKeysPanel: React.FC<ApiKeysPanelProps> = ({ apiKeys }) => {
       return;
     }
 
-    if (result.apiKey && result.privateKey) {
-      setCreatedCredentials({
-        apiKey: result.apiKey,
-        privateKey: result.privateKey,
-      });
+    if (result.apiKey) {
+      setCreatedCredentials({ apiKey: result.apiKey });
     }
     setName("");
   };
@@ -106,8 +102,8 @@ export const ApiKeysPanel: React.FC<ApiKeysPanelProps> = ({ apiKeys }) => {
         <div>
           <h1 className="text-xl font-semibold tracking-tight">API Keys</h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Programmatic access to env files. Env is encrypted for your key —
-            only your private key can decrypt it.
+            Programmatic access to env files. Use your API key to sync or fetch
+            env files from CI and scripts.
           </p>
         </div>
         <Button onClick={() => setIsModalOpen(true)}>
@@ -119,11 +115,11 @@ export const ApiKeysPanel: React.FC<ApiKeysPanelProps> = ({ apiKeys }) => {
       <div className="mb-6 rounded-lg border bg-muted/30 p-4 text-sm">
         <p className="font-medium">How it works</p>
         <ol className="mt-2 list-decimal space-y-1 pl-4 text-muted-foreground">
-          <li>Create an API key — copy the API key and private key immediately.</li>
+          <li>Create an API key — copy it immediately (shown once).</li>
           <li>
             Use the{" "}
             <code className="rounded bg-muted px-1 py-0.5 text-xs">env_vault</code>{" "}
-            npm package with both credentials.
+            npm package or sync script with your API key.
           </li>
         </ol>
       </div>
@@ -173,15 +169,14 @@ export const ApiKeysPanel: React.FC<ApiKeysPanelProps> = ({ apiKeys }) => {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         title="Create API Key"
-        className={createdCredentials ? "max-w-2xl" : undefined}
+        className={createdCredentials ? "max-w-lg" : undefined}
       >
         {createdCredentials ? (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Copy both credentials now. They will not be shown again.
+              Copy your API key now. It will not be shown again.
             </p>
             <CopyField label="API Key" value={createdCredentials.apiKey} />
-            <CopyField label="Private Key (PEM)" value={createdCredentials.privateKey} />
             <Button className="w-full" onClick={handleCloseModal}>
               Done
             </Button>

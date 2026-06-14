@@ -100,7 +100,7 @@ The script discovers `.env*` files in the current directory (or uses the `files`
 
 ### Setup
 
-1. In the EnvVault UI → **API Keys**, create a key and copy the API key and private key (shown once).
+1. In the EnvVault UI → **API Keys**, create a key and copy the API key (shown once).
 2. Install the client SDK:
    ```bash
    npm install env_vault

@@ -29,12 +29,7 @@ export async function getApiKeysFromDb(): Promise<ApiKey[]> {
 
 export async function createApiKeyAction(
   formData: FormData,
-): Promise<{
-  success: boolean;
-  apiKey?: string;
-  privateKey?: string;
-  error?: string;
-}> {
+): Promise<{ success: boolean; apiKey?: string; error?: string }> {
   const name = String(formData.get("name") || "").trim();
 
   if (!name) {
@@ -59,7 +54,7 @@ export async function createApiKeyAction(
   await reencryptAllEnvFilesForApiKey(doc._id.toString(), publicKey);
 
   revalidatePath("/");
-  return { success: true, apiKey, privateKey };
+  return { success: true, apiKey };
 }
 
 export async function deleteApiKeyAction(formData: FormData) {
