@@ -39,6 +39,65 @@ GET /api/v1/env?project=<name>&file=<filename>
 Authorization: Bearer evk_<your_api_key>
 ```
 
+### Sync API (upload)
+
+Push local env files to EnvVault programmatically. Requires the same API key used for downloads.
+
+**Single file upsert:**
+
+```
+PUT /api/v1/env
+Authorization: Bearer evk_<your_api_key>
+Content-Type: application/json
+
+{
+  "project": "my-app",
+  "file": ".env.local",
+  "content": "KEY=value\nOTHER=123\n",
+  "createProject": true,
+  "description": "Optional project description"
+}
+```
+
+Response:
+
+```json
+{
+  "project": "my-app",
+  "file": ".env.local",
+  "created": true,
+  "projectCreated": true,
+  "updatedAt": "2026-06-14T12:00:00.000Z"
+}
+```
+
+**Bulk sync:**
+
+```
+POST /api/v1/env
+Authorization: Bearer evk_<your_api_key>
+Content-Type: application/json
+
+{
+  "project": "my-app",
+  "createProject": true,
+  "files": [
+    { "file": ".env", "content": "A=1\n" },
+    { "file": ".env.production", "content": "B=2\n" }
+  ]
+}
+```
+
+### Local folder sync script
+
+Copy `script.js` to your project root, create `.envvault.json` from `.envvault.example.json`, set `ENVVAULT_API_KEY`, then run:
+
+```bash
+node script.js
+```
+
+The script discovers `.env*` files in the current directory (or uses the `files` list in config) and uploads them to `https://env.classyendeavors.com`.
+
 ### Setup
 
 1. Generate an RSA key pair:

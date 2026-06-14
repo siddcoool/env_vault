@@ -73,16 +73,46 @@ Returns only the decrypted `.env` string.
 
 Returns only the parsed key-value object.
 
+### `vault.syncEnv({ project, file, content, createProject?, description? })`
+
+Uploads or updates a single env file. Set `createProject: true` to auto-create the project folder.
+
+### `vault.syncEnvBulk({ project, files, createProject?, description? })`
+
+Bulk upload or update multiple env files in one request.
+
 ## REST API
 
 You can also call the API directly:
+
+**Download:**
 
 ```
 GET /api/v1/env?project=my-app&file=.env.production
 Authorization: Bearer evk_...
 ```
 
-Response:
+**Upload (single file):**
+
+```
+PUT /api/v1/env
+Authorization: Bearer evk_...
+Content-Type: application/json
+
+{ "project": "my-app", "file": ".env", "content": "KEY=value\n", "createProject": true }
+```
+
+**Bulk sync:**
+
+```
+POST /api/v1/env
+Authorization: Bearer evk_...
+Content-Type: application/json
+
+{ "project": "my-app", "createProject": true, "files": [{ "file": ".env", "content": "..." }] }
+```
+
+Download response:
 
 ```json
 {

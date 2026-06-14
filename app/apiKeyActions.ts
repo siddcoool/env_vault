@@ -19,7 +19,7 @@ export async function getApiKeysFromDb(): Promise<ApiKey[]> {
   const docs = await ApiKeyModel.find({}).sort({ createdAt: -1 }).lean();
 
   return docs.map((doc) => ({
-    id: doc._id.toString(),
+    id: String(doc._id),
     name: doc.name,
     keyPrefix: doc.keyPrefix,
     publicKeyPem: doc.publicKeyPem,

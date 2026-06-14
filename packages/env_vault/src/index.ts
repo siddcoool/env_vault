@@ -35,6 +35,62 @@ interface ApiResponse {
   encrypted: HybridEncryptedPayload;
 }
 
+export interface SyncEnvParams {
+  /** Project name (folder in EnvVault) */
+  project: string;
+  /** Env file name, e.g. ".env.production" */
+  file: string;
+  /** Raw .env file content */
+  content: string;
+  /** Create the project if it does not exist */
+  createProject?: boolean;
+  /** Optional description when creating a new project */
+  description?: string;
+}
+
+export interface SyncEnvResult {
+  project: string;
+  file: string;
+  created: boolean;
+  projectCreated: boolean;
+  updatedAt: string;
+}
+
+export interface SyncEnvBulkParams {
+  project: string;
+  files: Array<{ file: string; content: string }>;
+  createProject?: boolean;
+  description?: string;
+}
+
+export interface SyncEnvBulkResult {
+  project: string;
+  projectCreated: boolean;
+  results: Array<{
+    file: string;
+    created: boolean;
+    updatedAt: string;
+  }>;
+}
+
+interface PutEnvResponse {
+  project: string;
+  file: string;
+  created: boolean;
+  projectCreated: boolean;
+  updatedAt: string;
+}
+
+interface PostSyncResponse {
+  project: string;
+  projectCreated: boolean;
+  results: Array<{
+    file: string;
+    created: boolean;
+    updatedAt: string;
+  }>;
+}
+
 export class EnvVault {
   private apiKey: string;
   private privateKey: string;
@@ -88,6 +144,63 @@ export class EnvVault {
   async getEnvParsed(params: GetEnvParams): Promise<Record<string, string>> {
     const result = await this.getEnv(params);
     return result.parsed;
+  }
+
+  /** Upload or update a single env file in EnvVault */
+  async syncEnv(params: SyncEnvParams): Promise<SyncEnvResult> {
+    const response = await fetch(`${this.baseUrl}/api/v1/env`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        project: params.project,
+        file: params.file,
+        content: params.content,
+        createProject: params.createProject ?? false,
+        description: params.description,
+      }),
+    });
+
+    if (!response.ok) {
+      const body = (await response.json().catch(() => ({}))) as {
+        error?: string;
+      };
+      throw new Error(
+        body.error ?? `EnvVault API error: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    return (await response.json()) as PutEnvResponse;
+  }
+
+  /** Bulk upload or update multiple env files */
+  async syncEnvBulk(params: SyncEnvBulkParams): Promise<SyncEnvBulkResult> {
+    const response = await fetch(`${this.baseUrl}/api/v1/env`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        project: params.project,
+        files: params.files,
+        createProject: params.createProject ?? false,
+        description: params.description,
+      }),
+    });
+
+    if (!response.ok) {
+      const body = (await response.json().catch(() => ({}))) as {
+        error?: string;
+      };
+      throw new Error(
+        body.error ?? `EnvVault API error: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    return (await response.json()) as PostSyncResponse;
   }
 }
 

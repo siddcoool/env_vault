@@ -20,6 +20,16 @@ interface EnvFileDoc {
   }>;
 }
 
+interface ProjectLean {
+  _id: unknown;
+  envFiles?: EnvFileDoc[];
+}
+
+interface ApiKeyLean {
+  _id: unknown;
+  publicKeyPem: string;
+}
+
 function getPlaintextContent(env: EnvFileDoc): string {
   if (env.contentEnc) {
     return decrypt(env.contentEnc);
@@ -34,7 +44,7 @@ export async function reencryptEnvForAllApiKeys(
 ): Promise<void> {
   await connectDb();
 
-  const project = await ProjectModel.findById(projectId).lean();
+  const project = await ProjectModel.findById(projectId).lean<ProjectLean>();
   if (!project) return;
 
   const envFile = (project.envFiles as EnvFileDoc[] | undefined)?.find(
@@ -43,10 +53,10 @@ export async function reencryptEnvForAllApiKeys(
   if (!envFile) return;
 
   const content = plaintext ?? getPlaintextContent(envFile);
-  const apiKeys = await ApiKeyModel.find({}).lean();
+  const apiKeys = await ApiKeyModel.find({}).lean<ApiKeyLean[]>();
 
   const contentEncPublic = apiKeys.map((key) => ({
-    apiKeyId: key._id.toString(),
+    apiKeyId: String(key._id),
     payload: encryptWithPublicKey(content, key.publicKeyPem),
   }));
 
@@ -62,7 +72,7 @@ export async function reencryptAllEnvFilesForApiKey(
 ): Promise<void> {
   await connectDb();
 
-  const projects = await ProjectModel.find({}).lean();
+  const projects = await ProjectModel.find({}).lean<ProjectLean[]>();
 
   for (const project of projects) {
     const envFiles = (project.envFiles as EnvFileDoc[] | undefined) ?? [];
@@ -92,7 +102,7 @@ export async function reencryptAllEnvFilesForApiKey(
 export async function removeApiKeyEncryptions(apiKeyId: string): Promise<void> {
   await connectDb();
 
-  const projects = await ProjectModel.find({}).lean();
+  const projects = await ProjectModel.find({}).lean<ProjectLean[]>();
 
   for (const project of projects) {
     const envFiles = (project.envFiles as EnvFileDoc[] | undefined) ?? [];

@@ -16,12 +16,16 @@ export async function authenticateApiKey(
   await connectDb();
 
   const keyHash = hashApiKey(apiKey);
-  const doc = await ApiKeyModel.findOne({ keyHash }).lean();
+  const doc = await ApiKeyModel.findOne({ keyHash }).lean<{
+    _id: unknown;
+    name: string;
+    publicKeyPem: string;
+  }>();
 
   if (!doc) return null;
 
   return {
-    id: doc._id.toString(),
+    id: String(doc._id),
     name: doc.name,
     publicKeyPem: doc.publicKeyPem,
   };
