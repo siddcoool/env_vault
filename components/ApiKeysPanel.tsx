@@ -20,13 +20,47 @@ interface ApiKeysPanelProps {
   apiKeys: ApiKey[];
 }
 
+interface CreatedCredentials {
+  apiKey: string;
+  privateKey: string;
+}
+
+function CopyField({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div>
+      <label className="mb-1.5 block text-sm font-medium">{label}</label>
+      <div className="flex items-start gap-2">
+        <code className="max-h-32 flex-1 overflow-auto rounded border bg-muted p-2 text-xs whitespace-pre-wrap">
+          {value}
+        </code>
+        <Button variant="outline" size="icon-sm" onClick={handleCopy}>
+          {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export const ApiKeysPanel: React.FC<ApiKeysPanelProps> = ({ apiKeys }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState("");
-  const [publicKeyPem, setPublicKeyPem] = useState("");
   const [error, setError] = useState("");
-  const [createdKey, setCreatedKey] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [createdCredentials, setCreatedCredentials] =
+    useState<CreatedCredentials | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,7 +70,6 @@ export const ApiKeysPanel: React.FC<ApiKeysPanelProps> = ({ apiKeys }) => {
 
     const data = new FormData();
     data.append("name", name);
-    data.append("publicKeyPem", publicKeyPem);
 
     const result = await createApiKeyAction(data);
     setIsSubmitting(false);
@@ -46,23 +79,19 @@ export const ApiKeysPanel: React.FC<ApiKeysPanelProps> = ({ apiKeys }) => {
       return;
     }
 
-    setCreatedKey(result.apiKey ?? null);
+    if (result.apiKey && result.privateKey) {
+      setCreatedCredentials({
+        apiKey: result.apiKey,
+        privateKey: result.privateKey,
+      });
+    }
     setName("");
-    setPublicKeyPem("");
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setCreatedKey(null);
+    setCreatedCredentials(null);
     setError("");
-    setCopied(false);
-  };
-
-  const handleCopy = async () => {
-    if (!createdKey) return;
-    await navigator.clipboard.writeText(createdKey);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleDelete = (id: string) => {
@@ -77,8 +106,8 @@ export const ApiKeysPanel: React.FC<ApiKeysPanelProps> = ({ apiKeys }) => {
         <div>
           <h1 className="text-xl font-semibold tracking-tight">API Keys</h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Programmatic access to env files. Env is encrypted with your public
-            key — only your private key can decrypt it.
+            Programmatic access to env files. Env is encrypted for your key —
+            only your private key can decrypt it.
           </p>
         </div>
         <Button onClick={() => setIsModalOpen(true)}>
@@ -90,18 +119,13 @@ export const ApiKeysPanel: React.FC<ApiKeysPanelProps> = ({ apiKeys }) => {
       <div className="mb-6 rounded-lg border bg-muted/30 p-4 text-sm">
         <p className="font-medium">How it works</p>
         <ol className="mt-2 list-decimal space-y-1 pl-4 text-muted-foreground">
-          <li>Generate an RSA key pair and paste your public key here.</li>
-          <li>Create an API key — copy it immediately (shown once).</li>
+          <li>Create an API key — copy the API key and private key immediately.</li>
           <li>
             Use the{" "}
             <code className="rounded bg-muted px-1 py-0.5 text-xs">env_vault</code>{" "}
-            npm package with your API key and private key.
+            npm package with both credentials.
           </li>
         </ol>
-        <pre className="mt-3 overflow-x-auto rounded bg-background p-3 text-xs">
-{`openssl genrsa -out private.pem 2048
-openssl rsa -in private.pem -pubout -out public.pem`}
-        </pre>
       </div>
 
       {apiKeys.length === 0 ? (
@@ -146,19 +170,13 @@ openssl rsa -in private.pem -pubout -out public.pem`}
       )}
 
       <Modal isOpen={isModalOpen} onClose={handleCloseModal} title="Create API Key">
-        {createdKey ? (
+        {createdCredentials ? (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Copy your API key now. It will not be shown again.
+              Copy both credentials now. They will not be shown again.
             </p>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 overflow-x-auto rounded border bg-muted p-2 text-xs">
-                {createdKey}
-              </code>
-              <Button variant="outline" size="icon-sm" onClick={handleCopy}>
-                {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-              </Button>
-            </div>
+            <CopyField label="API Key" value={createdCredentials.apiKey} />
+            <CopyField label="Private Key (PEM)" value={createdCredentials.privateKey} />
             <Button className="w-full" onClick={handleCloseModal}>
               Done
             </Button>
@@ -171,18 +189,6 @@ openssl rsa -in private.pem -pubout -out public.pem`}
                 placeholder="CI pipeline"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium">
-                RSA Public Key (PEM)
-              </label>
-              <textarea
-                className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-xs font-mono ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                placeholder="-----BEGIN PUBLIC KEY-----&#10;...&#10;-----END PUBLIC KEY-----"
-                value={publicKeyPem}
-                onChange={(e) => setPublicKeyPem(e.target.value)}
                 required
               />
             </div>
