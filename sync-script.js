@@ -3,7 +3,7 @@
  * EnvVault sync script — push local .env files to https://env.classyendeavors.com
  *
  * Usage (from your project root):
- *   node script.js
+ *   node sync-script.js
  *
  * Configuration (in order of precedence):
  *   1. Shell environment variables: ENVVAULT_API_KEY, ENVVAULT_PROJECT, ENVVAULT_BASE_URL

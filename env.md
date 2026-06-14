@@ -90,10 +90,10 @@ Content-Type: application/json
 
 ### Local folder sync script
 
-Copy `script.js` to your project root, create `.envvault.json` from `.envvault.example.json`, add your `apiKey`, then run:
+Copy `sync-script.js` to your project root, create `.envvault.json` from `.envvault.example.json`, add your `apiKey`, then run:
 
 ```bash
-node script.js
+node sync-script.js
 ```
 
 The script discovers `.env*` files in the current directory (or uses the `files` list in config) and uploads them to `https://env.classyendeavors.com`.
