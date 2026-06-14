@@ -16,6 +16,15 @@ export interface Project {
 export enum ViewState {
   DASHBOARD = 'DASHBOARD',
   PROJECT_DETAIL = 'PROJECT_DETAIL',
+  API_KEYS = 'API_KEYS',
+}
+
+export interface ApiKey {
+  id: string;
+  name: string;
+  keyPrefix: string;
+  publicKeyPem: string;
+  createdAt: string;
 }
 
 

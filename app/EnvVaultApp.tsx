@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Layout } from "../components/Layout";
 import { ProjectList } from "../components/ProjectList";
 import { ProjectDetail } from "../components/ProjectDetail";
-import { Project, ViewState } from "../types";
+import { Project, ViewState, ApiKey } from "../types";
 import { ThemeProvider } from "../context/ThemeContext";
 import {
   createProjectAction,
@@ -13,22 +13,29 @@ import {
   updateEnvFileAction,
   deleteEnvFileAction,
 } from "./actions";
-
-// For now, this still uses in-memory state; it will be wired to Mongo-backed
-// server actions in the next steps.
+import { ApiKeysPanel } from "../components/ApiKeysPanel";
 
 interface EnvVaultAppProps {
   initialProjects: Project[];
+  initialApiKeys: ApiKey[];
 }
 
-export const EnvVaultApp: React.FC<EnvVaultAppProps> = ({ initialProjects }) => {
+export const EnvVaultApp: React.FC<EnvVaultAppProps> = ({
+  initialProjects,
+  initialApiKeys,
+}) => {
   const [view, setView] = useState<ViewState>(ViewState.DASHBOARD);
   const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>(initialApiKeys);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   useEffect(() => {
     setProjects(initialProjects);
   }, [initialProjects]);
+
+  useEffect(() => {
+    setApiKeys(initialApiKeys);
+  }, [initialApiKeys]);
 
   const handleSelectProject = (project: Project) => {
     setSelectedProject(project);
@@ -54,6 +61,11 @@ export const EnvVaultApp: React.FC<EnvVaultAppProps> = ({ initialProjects }) => 
 
   const handleNavigateHome = () => {
     setView(ViewState.DASHBOARD);
+    setSelectedProject(null);
+  };
+
+  const handleNavigateApiKeys = () => {
+    setView(ViewState.API_KEYS);
     setSelectedProject(null);
   };
 
@@ -90,8 +102,10 @@ export const EnvVaultApp: React.FC<EnvVaultAppProps> = ({ initialProjects }) => 
         projects={projects}
         selectedProjectId={currentSelected?.id ?? null}
         onNavigateHome={handleNavigateHome}
+        onNavigateApiKeys={handleNavigateApiKeys}
         onSelectProject={handleSelectProject}
         isHome={view === ViewState.DASHBOARD}
+        isApiKeys={view === ViewState.API_KEYS}
         currentProjectName={currentSelected?.name}
       >
         {view === ViewState.DASHBOARD && (
@@ -110,6 +124,9 @@ export const EnvVaultApp: React.FC<EnvVaultAppProps> = ({ initialProjects }) => 
             onUpdateEnv={handleUpdateEnv}
             onDeleteEnv={handleDeleteEnv}
           />
+        )}
+        {view === ViewState.API_KEYS && (
+          <ApiKeysPanel apiKeys={apiKeys} />
         )}
       </Layout>
     </ThemeProvider>

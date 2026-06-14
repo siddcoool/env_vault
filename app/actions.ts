@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { decrypt, encrypt } from "../lib/crypto";
 import { connectDb } from "../lib/mongoose";
 import { ProjectModel } from "../models/Project";
+import { reencryptEnvForAllApiKeys } from "../lib/env-reencrypt";
 
 interface EnvFileDoc {
   id: string;
@@ -98,11 +99,14 @@ export async function createEnvFileAction(formData: FormData) {
           id: envId,
           name,
           contentEnc: encrypted,
+          contentEncPublic: [],
           updatedAt: now,
         },
       },
     },
   );
+
+  await reencryptEnvForAllApiKeys(projectId, envId, defaultContent);
 
   revalidatePath("/");
 }
@@ -128,6 +132,8 @@ export async function updateEnvFileAction(formData: FormData) {
       },
     },
   );
+
+  await reencryptEnvForAllApiKeys(projectId, envId, content);
 
   revalidatePath("/");
 }

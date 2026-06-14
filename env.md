@@ -26,4 +26,32 @@ ENCRYPTION_KEY="dev-secret-key-32-bytes-1234567890"
 - The **database only stores encrypted env content**; decryption happens on the server before sending data to the UI.
 - You can change `MONGODB_URI` to your Atlas URI and update `ENCRYPTION_KEY` to a secure random 32‑byte value for production.
 
+---
+
+## Programmatic API access
+
+EnvVault supports fetching env files via REST API using an API key. Content is encrypted with your RSA **public key** — only your **private key** can decrypt it.
+
+### API endpoint
+
+```
+GET /api/v1/env?project=<name>&file=<filename>
+Authorization: Bearer evk_<your_api_key>
+```
+
+### Setup
+
+1. Generate an RSA key pair:
+   ```bash
+   openssl genrsa -out private.pem 2048
+   openssl rsa -in private.pem -pubout -out public.pem
+   ```
+2. In the EnvVault UI → **API Keys**, create a key with your public key.
+3. Install the client SDK:
+   ```bash
+   npm install env_vault
+   ```
+
+See `packages/env_vault/README.md` for SDK usage.
+
 

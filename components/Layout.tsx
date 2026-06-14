@@ -18,8 +18,10 @@ interface LayoutProps {
   projects: Project[];
   selectedProjectId: string | null;
   onNavigateHome: () => void;
+  onNavigateApiKeys: () => void;
   onSelectProject: (project: Project) => void;
   isHome: boolean;
+  isApiKeys: boolean;
   currentProjectName?: string;
 }
 
@@ -28,8 +30,10 @@ export const Layout: React.FC<LayoutProps> = ({
   projects,
   selectedProjectId,
   onNavigateHome,
+  onNavigateApiKeys,
   onSelectProject,
   isHome,
+  isApiKeys,
   currentProjectName,
 }) => {
   const { isDarkMode, toggleTheme } = useTheme();
@@ -40,7 +44,9 @@ export const Layout: React.FC<LayoutProps> = ({
         projects={projects}
         selectedProjectId={selectedProjectId}
         isHome={isHome}
+        isApiKeys={isApiKeys}
         onNavigateHome={onNavigateHome}
+        onNavigateApiKeys={onNavigateApiKeys}
         onSelectProject={onSelectProject}
       />
       <SidebarInset>
@@ -54,7 +60,7 @@ export const Layout: React.FC<LayoutProps> = ({
             >
               Projects
             </button>
-            {!isHome && currentProjectName && (
+            {!isHome && !isApiKeys && currentProjectName && (
               <>
                 <span className="mx-1 opacity-40">/</span>
                 <span className="text-foreground font-medium">{currentProjectName}</span>
