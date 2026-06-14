@@ -1,5 +1,20 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## EnvVault client scripts
+
+Use these in **any Node / Express project** (copy to your app root):
+
+| Script | Purpose |
+|--------|---------|
+| `sync-script.js` | Upload local `.env*` files to EnvVault |
+| `load-script.js` | Fetch and print / validate vault env (no file written) |
+| `envvault-run.js` | Load env from vault, then run `nodemon` / `node` |
+| `envvault-bootstrap.js` | `require()` in server.js to inject into `process.env` |
+
+**Express setup guide:** [docs/express-setup.md](docs/express-setup.md)
+
+**Server / API docs:** [env.md](env.md)
+
 ## Getting Started 
  
 First, run the development server: 

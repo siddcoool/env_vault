@@ -130,6 +130,22 @@ Download response:
 
 Decrypt `encrypted` with your RSA private key using hybrid RSA-OAEP + AES-256-GCM.
 
+## Express / Node (no SDK, no local `.env`)
+
+Copy the zero-dependency scripts from the repo root into your Express project:
+
+- `envvault-shared.js`, `envvault-bootstrap.js`, `envvault-run.js`, `load-script.js`
+
+Then use:
+
+```json
+"dev": "node envvault-run.js nodemon server.js"
+```
+
+Or call `loadEnvFromVault()` from `envvault-bootstrap` before `app.listen()`.
+
+See **`docs/express-setup.md`** in the EnvVault repo for the full guide.
+
 ## License
 
 MIT

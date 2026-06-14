@@ -88,7 +88,7 @@ Content-Type: application/json
 }
 ```
 
-### Local folder sync script
+### Local folder sync script (upload)
 
 Copy `sync-script.js` to your project root, create `.envvault.json` from `.envvault.example.json`, add your `apiKey`, then run:
 
@@ -98,10 +98,46 @@ node sync-script.js
 
 The script discovers `.env*` files in the current directory (or uses the `files` list in config) and uploads them to `https://env.classyendeavors.com`.
 
+### Load script (download — no local `.env` file)
+
+Copy these files to your Express (or Node) project root:
+
+- `envvault-shared.js`
+- `envvault-bootstrap.js`
+- `envvault-run.js`
+- `load-script.js` (optional — inspect / validate)
+
+**Run with wrapper (recommended):**
+
+```bash
+# package.json: "dev": "node envvault-run.js nodemon server.js"
+npm run dev
+```
+
+**Or bootstrap inside server.js:**
+
+```js
+const { loadEnvFromVault } = require("./envvault-bootstrap");
+
+async function main() {
+  await loadEnvFromVault(); // injects into process.env — nothing written to disk
+  // ... express app
+}
+```
+
+**Validate access:**
+
+```bash
+node load-script.js --check
+```
+
+Full Express setup guide: **`docs/express-setup.md`**
+
 ### Setup
 
-1. In the EnvVault UI → **API Keys**, create a key and copy the API key (shown once).
-2. Install the client SDK:
+1. In the EnvVault UI → **API Keys**, create a key and copy the API key and private key (shown once).
+2. For Express apps: follow `docs/express-setup.md` (zero npm deps — copy scripts).
+3. For TypeScript / programmatic use, install the client SDK:
    ```bash
    npm install env_vault
    ```
