@@ -23,7 +23,6 @@ export interface ApiKey {
   id: string;
   name: string;
   keyPrefix: string;
-  publicKeyPem: string;
   createdAt: string;
 }
 

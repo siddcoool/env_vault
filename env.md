@@ -100,13 +100,8 @@ The script discovers `.env*` files in the current directory (or uses the `files`
 
 ### Setup
 
-1. Generate an RSA key pair:
-   ```bash
-   openssl genrsa -out private.pem 2048
-   openssl rsa -in private.pem -pubout -out public.pem
-   ```
-2. In the EnvVault UI → **API Keys**, create a key with your public key.
-3. Install the client SDK:
+1. In the EnvVault UI → **API Keys**, create a key and copy the API key and private key (shown once).
+2. Install the client SDK:
    ```bash
    npm install env_vault
    ```
