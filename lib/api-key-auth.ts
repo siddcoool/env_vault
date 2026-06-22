@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import { connectDb } from "./mongoose";
 import { ApiKeyModel } from "../models/ApiKey";
 import { hashApiKey } from "./api-key-utils";
@@ -5,7 +6,7 @@ import { hashApiKey } from "./api-key-utils";
 export interface AuthenticatedApiKey {
   id: string;
   name: string;
-  publicKeyPem: string;
+  workspaceId: string;
 }
 
 export async function authenticateApiKey(
@@ -19,7 +20,7 @@ export async function authenticateApiKey(
   const doc = await ApiKeyModel.findOne({ keyHash }).lean<{
     _id: unknown;
     name: string;
-    publicKeyPem: string;
+    workspaceId: Types.ObjectId;
   }>();
 
   if (!doc) return null;
@@ -27,6 +28,6 @@ export async function authenticateApiKey(
   return {
     id: String(doc._id),
     name: doc.name,
-    publicKeyPem: doc.publicKeyPem,
+    workspaceId: doc.workspaceId.toString(),
   };
 }

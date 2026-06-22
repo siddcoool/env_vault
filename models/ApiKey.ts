@@ -1,21 +1,11 @@
-import { Schema, model, models } from "mongoose";
-
-const EncryptedPayloadSchema = new Schema(
-  {
-    iv: { type: String, required: true },
-    authTag: { type: String, required: true },
-    ciphertext: { type: String, required: true },
-  },
-  { _id: false },
-);
+import { Schema, model, models, Types } from "mongoose";
 
 const ApiKeySchema = new Schema(
   {
+    workspaceId: { type: Types.ObjectId, required: true, ref: "Workspace", index: true },
     name: { type: String, required: true },
     keyHash: { type: String, required: true, unique: true },
     keyPrefix: { type: String, required: true },
-    publicKeyPem: { type: String, required: true },
-    privateKeyEnc: { type: EncryptedPayloadSchema, required: true },
     createdAt: { type: String, required: true },
   },
   { collection: "api_keys" },

@@ -19,10 +19,14 @@ interface LayoutProps {
   selectedProjectId: string | null;
   onNavigateHome: () => void;
   onNavigateApiKeys: () => void;
+  onNavigateSettings: () => void;
   onSelectProject: (project: Project) => void;
   isHome: boolean;
   isApiKeys: boolean;
+  isSettings: boolean;
   currentProjectName?: string;
+  workspaceName?: string;
+  userEmail?: string;
 }
 
 export const Layout: React.FC<LayoutProps> = ({
@@ -31,10 +35,14 @@ export const Layout: React.FC<LayoutProps> = ({
   selectedProjectId,
   onNavigateHome,
   onNavigateApiKeys,
+  onNavigateSettings,
   onSelectProject,
   isHome,
   isApiKeys,
+  isSettings,
   currentProjectName,
+  workspaceName,
+  userEmail,
 }) => {
   const { isDarkMode, toggleTheme } = useTheme();
 
@@ -45,9 +53,13 @@ export const Layout: React.FC<LayoutProps> = ({
         selectedProjectId={selectedProjectId}
         isHome={isHome}
         isApiKeys={isApiKeys}
+        isSettings={isSettings}
         onNavigateHome={onNavigateHome}
         onNavigateApiKeys={onNavigateApiKeys}
+        onNavigateSettings={onNavigateSettings}
         onSelectProject={onSelectProject}
+        workspaceName={workspaceName}
+        userEmail={userEmail}
       />
       <SidebarInset>
         <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
@@ -60,7 +72,7 @@ export const Layout: React.FC<LayoutProps> = ({
             >
               Projects
             </button>
-            {!isHome && !isApiKeys && currentProjectName && (
+            {!isHome && !isApiKeys && !isSettings && currentProjectName && (
               <>
                 <span className="mx-1 opacity-40">/</span>
                 <span className="text-foreground font-medium">{currentProjectName}</span>

@@ -9,9 +9,7 @@ const path = require("path");
 
 const DEFAULT_BASE_URL = "https://env.classyendeavors.com";
 const CONFIG_FILE = ".envvault.json";
-
-const RSA_PADDING = crypto.constants.RSA_PKCS1_OAEP_PADDING;
-const RSA_HASH = "sha256";
+const DECRYPTION_KEY_PREFIX = "wdk_";
 
 function readJsonConfig(cwd) {
   const configPath = path.join(cwd, CONFIG_FILE);
@@ -25,44 +23,18 @@ function readJsonConfig(cwd) {
   }
 }
 
-function resolvePrivateKey(cwd, fileConfig) {
-  if (process.env.ENVVAULT_PRIVATE_KEY) {
-    return process.env.ENVVAULT_PRIVATE_KEY;
-  }
-
-  const keyPath = path.resolve(
-    cwd,
-    process.env.ENVVAULT_PRIVATE_KEY_PATH ||
-      fileConfig.privateKeyPath ||
-      "private.pem",
-  );
-
-  if (!fs.existsSync(keyPath)) {
-    throw new Error(
-      `Private key not found at ${keyPath}. Set ENVVAULT_PRIVATE_KEY, ENVVAULT_PRIVATE_KEY_PATH, or privateKeyPath in ${CONFIG_FILE}`,
-    );
-  }
-
-  return fs.readFileSync(keyPath, "utf8");
-}
-
 function loadConfig(cwd) {
   const fileConfig = readJsonConfig(cwd);
-  const folderName = path.basename(path.resolve(cwd));
 
   const apiKey = process.env.ENVVAULT_API_KEY || fileConfig.apiKey;
+  const decryptionKey =
+    process.env.ENVVAULT_DECRYPTION_KEY || fileConfig.decryptionKey;
+  const fileLink = process.env.ENVVAULT_FILE_LINK || fileConfig.fileLink;
   const baseUrl = (
     process.env.ENVVAULT_BASE_URL ||
     fileConfig.baseUrl ||
     DEFAULT_BASE_URL
   ).replace(/\/$/, "");
-  const project =
-    process.env.ENVVAULT_PROJECT || fileConfig.project || folderName;
-  const file =
-    process.env.ENVVAULT_FILE ||
-    fileConfig.loadFile ||
-    (Array.isArray(fileConfig.files) ? fileConfig.files[0] : undefined) ||
-    ".env";
 
   if (!apiKey) {
     throw new Error(
@@ -70,22 +42,39 @@ function loadConfig(cwd) {
     );
   }
 
-  const privateKey = resolvePrivateKey(cwd, fileConfig);
+  if (!decryptionKey) {
+    throw new Error(
+      `Missing decryption key. Set ENVVAULT_DECRYPTION_KEY or add decryptionKey to ${CONFIG_FILE}`,
+    );
+  }
 
-  return { apiKey, baseUrl, project, file, privateKey };
+  if (!fileLink) {
+    throw new Error(
+      `Missing file link. Set ENVVAULT_FILE_LINK or add fileLink to ${CONFIG_FILE}`,
+    );
+  }
+
+  return { apiKey, decryptionKey, fileLink, baseUrl };
 }
 
-function decryptWithPrivateKey(payload, privateKeyPem) {
-  const aesKey = crypto.privateDecrypt(
-    { key: privateKeyPem, padding: RSA_PADDING, oaepHash: RSA_HASH },
-    Buffer.from(payload.encryptedKey, "base64"),
-  );
+function decryptionKeyToBuffer(rawKey) {
+  const stripped = rawKey.startsWith(DECRYPTION_KEY_PREFIX)
+    ? rawKey.slice(DECRYPTION_KEY_PREFIX.length)
+    : rawKey;
+  const buf = Buffer.from(stripped, "base64url");
+  if (buf.length !== 32) {
+    throw new Error("Invalid workspace decryption key length");
+  }
+  return buf;
+}
 
+function decryptWithWorkspaceKey(payload, decryptionKey) {
+  const key = decryptionKeyToBuffer(decryptionKey);
   const iv = Buffer.from(payload.iv, "base64");
   const authTag = Buffer.from(payload.authTag, "base64");
   const ciphertext = Buffer.from(payload.ciphertext, "base64");
 
-  const decipher = crypto.createDecipheriv("aes-256-gcm", aesKey, iv);
+  const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
   decipher.setAuthTag(authTag);
   const decrypted = Buffer.concat([
     decipher.update(ciphertext),
@@ -95,59 +84,64 @@ function decryptWithPrivateKey(payload, privateKeyPem) {
   return decrypted.toString("utf8");
 }
 
-function parseEnvContent(content) {
-  const result = {};
+function parseValuesJson(json) {
+  const parsed = JSON.parse(json);
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("Values must be a JSON object");
+  }
+  return parsed;
+}
 
-  for (const line of content.split("\n")) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-
-    const eqIndex = trimmed.indexOf("=");
-    if (eqIndex === -1) continue;
-
-    const key = trimmed.slice(0, eqIndex).trim();
-    let value = trimmed.slice(eqIndex + 1).trim();
-
-    if (
-      (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
-      value = value.slice(1, -1);
-    }
-
-    result[key] = value;
+class Vault {
+  constructor(config) {
+    this.apiKey = config.apiKey;
+    this.decryptionKey = config.decryptionKey;
+    this.fileLink = config.fileLink;
+    this.baseUrl = config.baseUrl.replace(/\/$/, "");
+    this.values = {};
+    this.initialized = false;
   }
 
-  return result;
+  async init() {
+    const url = `${this.baseUrl}/api/v1/vault/${encodeURIComponent(this.fileLink)}`;
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${this.apiKey}` },
+    });
+    const body = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(body.error || `HTTP ${response.status} ${response.statusText}`);
+    }
+
+    const json = decryptWithWorkspaceKey(body.encrypted, this.decryptionKey);
+    this.values = parseValuesJson(json);
+    this.initialized = true;
+  }
+
+  getKey(name) {
+    if (!this.initialized) {
+      throw new Error("Vault not initialized. Call await vault.init() first.");
+    }
+    return this.values[name];
+  }
+
+  getAll() {
+    if (!this.initialized) {
+      throw new Error("Vault not initialized. Call await vault.init() first.");
+    }
+    return { ...this.values };
+  }
 }
 
 async function fetchEnvFromVault(config) {
-  const url = new URL(`${config.baseUrl}/api/v1/env`);
-  url.searchParams.set("project", config.project);
-  url.searchParams.set("file", config.file);
-
-  const response = await fetch(url.toString(), {
-    headers: {
-      Authorization: `Bearer ${config.apiKey}`,
-    },
-  });
-
-  const body = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    throw new Error(
-      body.error || `HTTP ${response.status} ${response.statusText}`,
-    );
-  }
-
-  const content = decryptWithPrivateKey(body.encrypted, config.privateKey);
+  const vault = new Vault(config);
+  await vault.init();
+  const parsed = vault.getAll();
 
   return {
-    project: body.project,
-    file: body.file,
-    updatedAt: body.updatedAt ?? null,
-    content,
-    parsed: parseEnvContent(content),
+    fileLink: config.fileLink,
+    parsed,
+    values: parsed,
   };
 }
 
@@ -166,7 +160,6 @@ function applyEnvToProcess(parsed, { overwrite = true } = {}) {
 
 /**
  * Fetches env from EnvVault and injects values into process.env (runtime only).
- * Does not write any .env file to disk.
  */
 async function loadEnvFromVault(cwd = process.cwd(), options = {}) {
   const config = loadConfig(cwd);
@@ -182,10 +175,10 @@ async function loadEnvFromVault(cwd = process.cwd(), options = {}) {
 module.exports = {
   CONFIG_FILE,
   DEFAULT_BASE_URL,
+  Vault,
   loadConfig,
   fetchEnvFromVault,
-  parseEnvContent,
-  decryptWithPrivateKey,
+  decryptWithWorkspaceKey,
   applyEnvToProcess,
   loadEnvFromVault,
 };

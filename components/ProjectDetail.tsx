@@ -1,12 +1,26 @@
 "use client";
 
 import React, { useState } from "react";
-import { ArrowLeft, Save, Plus, FileCode, Trash2, Copy, Check, Info } from "lucide-react";
+import {
+  ArrowLeft,
+  Save,
+  Plus,
+  FileCode,
+  Trash2,
+  Copy,
+  Check,
+  Info,
+  Link2,
+} from "lucide-react";
 import { Project } from "../types";
 import { Button } from "./ui/button";
 import { Modal } from "./ui/Modal";
 import { Input } from "./ui/input";
 import { EnvEditor } from "./EnvEditor";
+import {
+  objectToJsExport,
+  parseEnvToObject,
+} from "@/lib/env-object-utils";
 
 interface ProjectDetailProps {
   project: Project;
@@ -15,6 +29,8 @@ interface ProjectDetailProps {
   onUpdateEnv: (projectId: string, envId: string, content: string) => void;
   onDeleteEnv: (projectId: string, envId: string) => void;
 }
+
+type EditorView = "env" | "js";
 
 export const ProjectDetail: React.FC<ProjectDetailProps> = ({
   project,
@@ -25,14 +41,17 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
 }) => {
   const [selectedEnvId, setSelectedEnvId] = useState<string | null>(null);
   const [editorContent, setEditorContent] = useState("");
+  const [editorView, setEditorView] = useState<EditorView>("env");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newEnvName, setNewEnvName] = useState("");
   const [isDirty, setIsDirty] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const handleSelectEnv = (envId: string, content: string) => {
     setSelectedEnvId(envId);
     setEditorContent(content);
+    setEditorView("env");
     setIsDirty(false);
   };
 
@@ -63,12 +82,24 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
   };
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(editorContent);
+    const text =
+      editorView === "js"
+        ? objectToJsExport(parseEnvToObject(editorContent))
+        : editorContent;
+    navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleCopyLink = () => {
+    if (!selectedEnv?.fileLink) return;
+    navigator.clipboard.writeText(selectedEnv.fileLink);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  };
+
   const selectedEnv = project.envFiles.find((e) => e.id === selectedEnvId);
+  const jsPreview = objectToJsExport(parseEnvToObject(editorContent));
 
   return (
     <div className="flex flex-col h-full">
@@ -135,11 +166,53 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
           {selectedEnv ? (
             <>
               <div className="h-12 flex items-center justify-between px-4 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900">
-                <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                  <span className="font-mono text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-slate-800">
-                    {editorContent.split("\n").length} lines
-                  </span>
-                  {isDirty && (
+                <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                  <div className="flex rounded-md border overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setEditorView("env")}
+                      className={`px-3 py-1 text-xs ${
+                        editorView === "env"
+                          ? "bg-primary text-primary-foreground"
+                          : "hover:bg-muted"
+                      }`}
+                    >
+                      .env
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditorView("js")}
+                      className={`px-3 py-1 text-xs ${
+                        editorView === "js"
+                          ? "bg-primary text-primary-foreground"
+                          : "hover:bg-muted"
+                      }`}
+                    >
+                      JS object
+                    </button>
+                  </div>
+                  {selectedEnv.fileLink && (
+                    <button
+                      type="button"
+                      onClick={handleCopyLink}
+                      className="flex items-center gap-1 rounded bg-gray-100 dark:bg-slate-800 px-2 py-0.5 font-mono text-xs hover:bg-gray-200 dark:hover:bg-slate-700"
+                      title="Copy file link for API"
+                    >
+                      <Link2 className="size-3" />
+                      {selectedEnv.fileLink}
+                      {linkCopied ? (
+                        <Check className="size-3 text-green-500" />
+                      ) : (
+                        <Copy className="size-3 opacity-50" />
+                      )}
+                    </button>
+                  )}
+                  {editorView === "env" && (
+                    <span className="font-mono text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-slate-800">
+                      {editorContent.split("\n").length} lines
+                    </span>
+                  )}
+                  {isDirty && editorView === "env" && (
                     <span className="text-amber-500 text-xs font-medium">● Unsaved Changes</span>
                   )}
                 </div>
@@ -147,25 +220,33 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                   <Button variant="ghost" size="sm" onClick={handleCopy} title="Copy to clipboard">
                     {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                   </Button>
-                  <Button
-                    size="sm"
-                    onClick={handleSave}
-                    disabled={!isDirty}
-                    className={isDirty ? "animate-pulse" : ""}
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    Save
-                  </Button>
+                  {editorView === "env" && (
+                    <Button
+                      size="sm"
+                      onClick={handleSave}
+                      disabled={!isDirty}
+                      className={isDirty ? "animate-pulse" : ""}
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      Save
+                    </Button>
+                  )}
                 </div>
               </div>
               <div className="flex-1 relative">
-                <EnvEditor
-                  value={editorContent}
-                  onChange={(val) => {
-                    setEditorContent(val);
-                    setIsDirty(true);
-                  }}
-                />
+                {editorView === "env" ? (
+                  <EnvEditor
+                    value={editorContent}
+                    onChange={(val) => {
+                      setEditorContent(val);
+                      setIsDirty(true);
+                    }}
+                  />
+                ) : (
+                  <pre className="absolute inset-0 overflow-auto p-6 font-mono text-sm bg-white dark:bg-slate-950 text-gray-800 dark:text-gray-300 whitespace-pre-wrap">
+                    {jsPreview}
+                  </pre>
+                )}
               </div>
             </>
           ) : (
@@ -199,8 +280,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
           <div className="flex items-start p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-xs text-blue-700 dark:text-blue-300">
             <Info className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
             <p>
-              Typically environment files start with <code>.env</code>. We&apos;ll automatically add the
-              extension if you miss it.
+              Enter values in .env format. They are stored as a JS object and exposed via a unique file link.
             </p>
           </div>
           <div className="flex justify-end pt-2">
@@ -219,5 +299,3 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
     </div>
   );
 };
-
-

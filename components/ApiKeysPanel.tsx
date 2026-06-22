@@ -113,13 +113,13 @@ export const ApiKeysPanel: React.FC<ApiKeysPanelProps> = ({ apiKeys }) => {
       </div>
 
       <div className="mb-6 rounded-lg border bg-muted/30 p-4 text-sm">
-        <p className="font-medium">How it works</p>
+          <p className="font-medium">How it works</p>
         <ol className="mt-2 list-decimal space-y-1 pl-4 text-muted-foreground">
           <li>Create an API key — copy it immediately (shown once).</li>
           <li>
-            Use the{" "}
+            Use your workspace decryption key and a file link with the{" "}
             <code className="rounded bg-muted px-1 py-0.5 text-xs">env_vault</code>{" "}
-            npm package or sync script with your API key.
+            SDK: <code className="text-xs">vault.getKey(&quot;KEY&quot;)</code>.
           </li>
         </ol>
       </div>

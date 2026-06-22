@@ -1,113 +1,47 @@
 import {
-  decryptWithPrivateKey,
-  parseEnvContent,
-  type HybridEncryptedPayload,
-} from "./decrypt";
+  decryptWithWorkspaceKey,
+  parseValuesJson,
+  type EncryptedPayload,
+} from "./decrypt-workspace";
 
-export interface EnvVaultConfig {
-  /** Your EnvVault API key (evk_...) */
+export interface VaultConfig {
+  /** Workspace API key (evk_...) */
   apiKey: string;
-  /** RSA private key PEM used to decrypt env content */
-  privateKey: string;
+  /** Workspace decryption key (wdk_...) */
+  decryptionKey: string;
+  /** Unique file link (vl_...) */
+  fileLink: string;
   /** EnvVault server URL, e.g. https://envvault.example.com */
   baseUrl: string;
 }
 
-export interface GetEnvParams {
-  /** Project name */
-  project: string;
-  /** Env file name, e.g. ".env.production" */
-  file: string;
-}
-
-export interface EnvResponse {
-  project: string;
-  file: string;
+interface VaultApiResponse {
+  fileLink: string;
+  name: string;
   updatedAt: string | null;
-  content: string;
-  parsed: Record<string, string>;
+  encrypted: EncryptedPayload;
 }
 
-interface ApiResponse {
-  project: string;
-  file: string;
-  updatedAt: string | null;
-  encrypted: HybridEncryptedPayload;
-}
-
-export interface SyncEnvParams {
-  /** Project name (folder in EnvVault) */
-  project: string;
-  /** Env file name, e.g. ".env.production" */
-  file: string;
-  /** Raw .env file content */
-  content: string;
-  /** Create the project if it does not exist */
-  createProject?: boolean;
-  /** Optional description when creating a new project */
-  description?: string;
-}
-
-export interface SyncEnvResult {
-  project: string;
-  file: string;
-  created: boolean;
-  projectCreated: boolean;
-  updatedAt: string;
-}
-
-export interface SyncEnvBulkParams {
-  project: string;
-  files: Array<{ file: string; content: string }>;
-  createProject?: boolean;
-  description?: string;
-}
-
-export interface SyncEnvBulkResult {
-  project: string;
-  projectCreated: boolean;
-  results: Array<{
-    file: string;
-    created: boolean;
-    updatedAt: string;
-  }>;
-}
-
-interface PutEnvResponse {
-  project: string;
-  file: string;
-  created: boolean;
-  projectCreated: boolean;
-  updatedAt: string;
-}
-
-interface PostSyncResponse {
-  project: string;
-  projectCreated: boolean;
-  results: Array<{
-    file: string;
-    created: boolean;
-    updatedAt: string;
-  }>;
-}
-
-export class EnvVault {
+export class Vault {
   private apiKey: string;
-  private privateKey: string;
+  private decryptionKey: string;
+  private fileLink: string;
   private baseUrl: string;
+  private values: Record<string, string> = {};
+  private initialized = false;
 
-  constructor(config: EnvVaultConfig) {
+  constructor(config: VaultConfig) {
     this.apiKey = config.apiKey;
-    this.privateKey = config.privateKey;
+    this.decryptionKey = config.decryptionKey;
+    this.fileLink = config.fileLink;
     this.baseUrl = config.baseUrl.replace(/\/$/, "");
   }
 
-  async getEnv(params: GetEnvParams): Promise<EnvResponse> {
-    const url = new URL(`${this.baseUrl}/api/v1/env`);
-    url.searchParams.set("project", params.project);
-    url.searchParams.set("file", params.file);
+  /** Fetch and decrypt env values from the vault */
+  async init(): Promise<void> {
+    const url = `${this.baseUrl}/api/v1/vault/${encodeURIComponent(this.fileLink)}`;
 
-    const response = await fetch(url.toString(), {
+    const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
       },
@@ -122,87 +56,34 @@ export class EnvVault {
       );
     }
 
-    const data = (await response.json()) as ApiResponse;
-    const content = decryptWithPrivateKey(data.encrypted, this.privateKey);
-
-    return {
-      project: data.project,
-      file: data.file,
-      updatedAt: data.updatedAt,
-      content,
-      parsed: parseEnvContent(content),
-    };
+    const data = (await response.json()) as VaultApiResponse;
+    const json = decryptWithWorkspaceKey(data.encrypted, this.decryptionKey);
+    this.values = parseValuesJson(json);
+    this.initialized = true;
   }
 
-  /** Returns only the raw decrypted .env string */
-  async getEnvRaw(params: GetEnvParams): Promise<string> {
-    const result = await this.getEnv(params);
-    return result.content;
-  }
-
-  /** Returns parsed key-value pairs from the env file */
-  async getEnvParsed(params: GetEnvParams): Promise<Record<string, string>> {
-    const result = await this.getEnv(params);
-    return result.parsed;
-  }
-
-  /** Upload or update a single env file in EnvVault */
-  async syncEnv(params: SyncEnvParams): Promise<SyncEnvResult> {
-    const response = await fetch(`${this.baseUrl}/api/v1/env`, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        project: params.project,
-        file: params.file,
-        content: params.content,
-        createProject: params.createProject ?? false,
-        description: params.description,
-      }),
-    });
-
-    if (!response.ok) {
-      const body = (await response.json().catch(() => ({}))) as {
-        error?: string;
-      };
-      throw new Error(
-        body.error ?? `EnvVault API error: ${response.status} ${response.statusText}`,
-      );
+  /** Get a single env value by key */
+  getKey(name: string): string | undefined {
+    if (!this.initialized) {
+      throw new Error("Vault not initialized. Call await vault.init() first.");
     }
-
-    return (await response.json()) as PutEnvResponse;
+    return this.values[name];
   }
 
-  /** Bulk upload or update multiple env files */
-  async syncEnvBulk(params: SyncEnvBulkParams): Promise<SyncEnvBulkResult> {
-    const response = await fetch(`${this.baseUrl}/api/v1/env`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        project: params.project,
-        files: params.files,
-        createProject: params.createProject ?? false,
-        description: params.description,
-      }),
-    });
-
-    if (!response.ok) {
-      const body = (await response.json().catch(() => ({}))) as {
-        error?: string;
-      };
-      throw new Error(
-        body.error ?? `EnvVault API error: ${response.status} ${response.statusText}`,
-      );
+  /** Get all decrypted values */
+  getAll(): Record<string, string> {
+    if (!this.initialized) {
+      throw new Error("Vault not initialized. Call await vault.init() first.");
     }
+    return { ...this.values };
+  }
 
-    return (await response.json()) as PostSyncResponse;
+  /** Reload values from the server */
+  async refresh(): Promise<void> {
+    this.initialized = false;
+    await this.init();
   }
 }
 
-export { decryptWithPrivateKey, parseEnvContent };
-export type { HybridEncryptedPayload };
+export { decryptWithWorkspaceKey, parseValuesJson };
+export type { EncryptedPayload };

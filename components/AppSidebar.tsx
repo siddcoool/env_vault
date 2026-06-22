@@ -1,6 +1,6 @@
 "use client";
 
-import { Database, FolderOpen, Key, LayoutDashboard } from "lucide-react";
+import { Database, FolderOpen, Key, LayoutDashboard, Settings } from "lucide-react";
 import { Project } from "@/types";
 import {
   formatRelativeTime,
@@ -10,6 +10,7 @@ import {
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -25,9 +26,13 @@ interface AppSidebarProps {
   selectedProjectId: string | null;
   isHome: boolean;
   isApiKeys: boolean;
+  isSettings: boolean;
   onNavigateHome: () => void;
   onNavigateApiKeys: () => void;
+  onNavigateSettings: () => void;
   onSelectProject: (project: Project) => void;
+  workspaceName?: string;
+  userEmail?: string;
 }
 
 export function AppSidebar({
@@ -35,9 +40,13 @@ export function AppSidebar({
   selectedProjectId,
   isHome,
   isApiKeys,
+  isSettings,
   onNavigateHome,
   onNavigateApiKeys,
+  onNavigateSettings,
   onSelectProject,
+  workspaceName,
+  userEmail,
 }: AppSidebarProps) {
   const recentProjects = getRecentlyUpdatedProjects(projects);
 
@@ -46,7 +55,14 @@ export function AppSidebar({
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2 px-2 py-1">
           <Database className="size-5 text-sidebar-primary" />
-          <span className="text-lg font-semibold">EnvVault</span>
+          <div className="min-w-0">
+            <span className="block text-lg font-semibold">EnvVault</span>
+            {workspaceName && (
+              <span className="block truncate text-xs text-muted-foreground">
+                {workspaceName}
+              </span>
+            )}
+          </div>
         </div>
       </SidebarHeader>
 
@@ -73,6 +89,16 @@ export function AppSidebar({
                 >
                   <Key />
                   <span>API Keys</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={isSettings}
+                  onClick={onNavigateSettings}
+                  tooltip="Settings"
+                >
+                  <Settings />
+                  <span>Settings</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -118,6 +144,12 @@ export function AppSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      {userEmail && (
+        <SidebarFooter className="border-t border-sidebar-border p-2">
+          <p className="truncate px-2 text-xs text-muted-foreground">{userEmail}</p>
+        </SidebarFooter>
+      )}
     </Sidebar>
   );
 }

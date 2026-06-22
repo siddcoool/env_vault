@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Layout } from "../components/Layout";
 import { ProjectList } from "../components/ProjectList";
 import { ProjectDetail } from "../components/ProjectDetail";
-import { Project, ViewState, ApiKey } from "../types";
+import { Project, ViewState, ApiKey, WorkspaceInfo } from "../types";
 import { ThemeProvider } from "../context/ThemeContext";
 import {
   createProjectAction,
@@ -14,15 +14,20 @@ import {
   deleteEnvFileAction,
 } from "./actions";
 import { ApiKeysPanel } from "../components/ApiKeysPanel";
+import { SettingsPanel } from "../components/SettingsPanel";
 
 interface EnvVaultAppProps {
   initialProjects: Project[];
   initialApiKeys: ApiKey[];
+  workspace: WorkspaceInfo | null;
+  userEmail: string;
 }
 
 export const EnvVaultApp: React.FC<EnvVaultAppProps> = ({
   initialProjects,
   initialApiKeys,
+  workspace,
+  userEmail,
 }) => {
   const [view, setView] = useState<ViewState>(ViewState.DASHBOARD);
   const [projects, setProjects] = useState<Project[]>(initialProjects);
@@ -69,6 +74,11 @@ export const EnvVaultApp: React.FC<EnvVaultAppProps> = ({
     setSelectedProject(null);
   };
 
+  const handleNavigateSettings = () => {
+    setView(ViewState.SETTINGS);
+    setSelectedProject(null);
+  };
+
   const handleAddEnv = (projectId: string, name: string) => {
     const data = new FormData();
     data.append("projectId", projectId);
@@ -103,10 +113,14 @@ export const EnvVaultApp: React.FC<EnvVaultAppProps> = ({
         selectedProjectId={currentSelected?.id ?? null}
         onNavigateHome={handleNavigateHome}
         onNavigateApiKeys={handleNavigateApiKeys}
+        onNavigateSettings={handleNavigateSettings}
         onSelectProject={handleSelectProject}
         isHome={view === ViewState.DASHBOARD}
         isApiKeys={view === ViewState.API_KEYS}
+        isSettings={view === ViewState.SETTINGS}
         currentProjectName={currentSelected?.name}
+        workspaceName={workspace?.name}
+        userEmail={userEmail}
       >
         {view === ViewState.DASHBOARD && (
           <ProjectList
@@ -128,9 +142,10 @@ export const EnvVaultApp: React.FC<EnvVaultAppProps> = ({
         {view === ViewState.API_KEYS && (
           <ApiKeysPanel apiKeys={apiKeys} />
         )}
+        {view === ViewState.SETTINGS && workspace && (
+          <SettingsPanel workspace={workspace} userEmail={userEmail} />
+        )}
       </Layout>
     </ThemeProvider>
   );
 };
-
-

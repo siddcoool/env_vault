@@ -1,8 +1,6 @@
 # env_vault
 
-Client SDK for programmatic access to [EnvVault](https://github.com/your-org/env_vault) environment files.
-
-Env content is encrypted with your RSA public key on the server. Only your private key can decrypt it — the server never sends plaintext over the API.
+Client SDK for programmatic access to EnvVault environment files.
 
 ## Install
 
@@ -12,139 +10,64 @@ npm install env_vault
 
 ## Setup
 
-1. Generate an RSA key pair:
+1. Register an account — save your **workspace decryption key** (`wdk_...`).
+2. Create an **API key** (`evk_...`) in the dashboard.
+3. Copy a file's **file link** (`vl_...`) from the project detail view.
 
-```bash
-openssl genrsa -out private.pem 2048
-openssl rsa -in private.pem -pubout -out public.pem
-```
-
-2. In EnvVault UI → **API Keys**, paste your public key and create an API key.
-
-3. Use the SDK in your app or CI:
+## Usage
 
 ```typescript
-import { readFileSync } from "fs";
-import { EnvVault } from "env_vault";
+import { Vault } from "env_vault";
 
-const vault = new EnvVault({
+const vault = new Vault({
   apiKey: process.env.ENVVAULT_API_KEY!,
-  privateKey: readFileSync("private.pem", "utf8"),
+  decryptionKey: process.env.ENVVAULT_DECRYPTION_KEY!,
+  fileLink: process.env.ENVVAULT_FILE_LINK!,
   baseUrl: "https://your-envvault.example.com",
 });
 
-const { parsed, content } = await vault.getEnv({
-  project: "my-app",
-  file: ".env.production",
-});
+await vault.init();
 
-console.log(parsed.DATABASE_URL);
+// Use instead of process.env
+const dbUrl = vault.getKey("DATABASE_URL");
+const all = vault.getAll();
 ```
 
 ## API
 
-### `new EnvVault(config)`
+### `new Vault(config)`
 
 | Option | Description |
 |--------|-------------|
 | `apiKey` | Your `evk_...` API key |
-| `privateKey` | RSA private key PEM string |
+| `decryptionKey` | Workspace `wdk_...` decryption key |
+| `fileLink` | File link `vl_...` from the dashboard |
 | `baseUrl` | EnvVault server URL |
 
-### `vault.getEnv({ project, file })`
+### `await vault.init()`
 
-Fetches and decrypts an env file. Returns:
+Fetches and decrypts env values from the vault.
 
-```typescript
-{
-  project: string;
-  file: string;
-  updatedAt: string | null;
-  content: string;           // raw .env text
-  parsed: Record<string, string>;  // parsed KEY=value pairs
-}
-```
+### `vault.getKey(name)`
 
-### `vault.getEnvRaw({ project, file })`
+Returns a single secret value. Throws if `init()` was not called.
 
-Returns only the decrypted `.env` string.
+### `vault.getAll()`
 
-### `vault.getEnvParsed({ project, file })`
+Returns all key-value pairs.
 
-Returns only the parsed key-value object.
+### `await vault.refresh()`
 
-### `vault.syncEnv({ project, file, content, createProject?, description? })`
-
-Uploads or updates a single env file. Set `createProject: true` to auto-create the project folder.
-
-### `vault.syncEnvBulk({ project, files, createProject?, description? })`
-
-Bulk upload or update multiple env files in one request.
+Re-fetches values from the server.
 
 ## REST API
 
-You can also call the API directly:
-
-**Download:**
-
 ```
-GET /api/v1/env?project=my-app&file=.env.production
+GET /api/v1/vault/vl_abc123
 Authorization: Bearer evk_...
 ```
 
-**Upload (single file):**
-
-```
-PUT /api/v1/env
-Authorization: Bearer evk_...
-Content-Type: application/json
-
-{ "project": "my-app", "file": ".env", "content": "KEY=value\n", "createProject": true }
-```
-
-**Bulk sync:**
-
-```
-POST /api/v1/env
-Authorization: Bearer evk_...
-Content-Type: application/json
-
-{ "project": "my-app", "createProject": true, "files": [{ "file": ".env", "content": "..." }] }
-```
-
-Download response:
-
-```json
-{
-  "project": "my-app",
-  "file": ".env.production",
-  "updatedAt": "2026-06-14T12:00:00.000Z",
-  "encrypted": {
-    "encryptedKey": "...",
-    "iv": "...",
-    "authTag": "...",
-    "ciphertext": "..."
-  }
-}
-```
-
-Decrypt `encrypted` with your RSA private key using hybrid RSA-OAEP + AES-256-GCM.
-
-## Express / Node (no SDK, no local `.env`)
-
-Copy the zero-dependency scripts from the repo root into your Express project:
-
-- `envvault-shared.js`, `envvault-bootstrap.js`, `envvault-run.js`, `load-script.js`
-
-Then use:
-
-```json
-"dev": "node envvault-run.js nodemon server.js"
-```
-
-Or call `loadEnvFromVault()` from `envvault-bootstrap` before `app.listen()`.
-
-See **`docs/express-setup.md`** in the EnvVault repo for the full guide.
+See **`docs/client-sdk.md`** in the EnvVault repo.
 
 ## License
 

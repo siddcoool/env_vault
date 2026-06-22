@@ -1,6 +1,7 @@
 export interface EnvFile {
   id: string;
   name: string;
+  fileLink: string;
   content: string;
   updatedAt: string;
 }
@@ -14,9 +15,10 @@ export interface Project {
 }
 
 export enum ViewState {
-  DASHBOARD = 'DASHBOARD',
-  PROJECT_DETAIL = 'PROJECT_DETAIL',
-  API_KEYS = 'API_KEYS',
+  DASHBOARD = "DASHBOARD",
+  PROJECT_DETAIL = "PROJECT_DETAIL",
+  API_KEYS = "API_KEYS",
+  SETTINGS = "SETTINGS",
 }
 
 export interface ApiKey {
@@ -26,4 +28,13 @@ export interface ApiKey {
   createdAt: string;
 }
 
+export interface WorkspaceInfo {
+  id: string;
+  name: string;
+  decryptionKeyPrefix: string;
+}
 
+export interface UserInfo {
+  email: string;
+  name?: string;
+}
