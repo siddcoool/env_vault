@@ -26,7 +26,6 @@ function readJsonConfig(cwd) {
 function loadConfig(cwd) {
   const fileConfig = readJsonConfig(cwd);
 
-  const apiKey = process.env.ENVVAULT_API_KEY || fileConfig.apiKey;
   const decryptionKey =
     process.env.ENVVAULT_DECRYPTION_KEY || fileConfig.decryptionKey;
   const fileLink = process.env.ENVVAULT_FILE_LINK || fileConfig.fileLink;
@@ -36,15 +35,9 @@ function loadConfig(cwd) {
     DEFAULT_BASE_URL
   ).replace(/\/$/, "");
 
-  if (!apiKey) {
-    throw new Error(
-      `Missing API key. Set ENVVAULT_API_KEY in your shell or add apiKey to ${CONFIG_FILE}`,
-    );
-  }
-
   if (!decryptionKey) {
     throw new Error(
-      `Missing decryption key. Set ENVVAULT_DECRYPTION_KEY or add decryptionKey to ${CONFIG_FILE}`,
+      `Missing decryption key. Set ENVVAULT_DECRYPTION_KEY in your shell or add decryptionKey to ${CONFIG_FILE}`,
     );
   }
 
@@ -54,7 +47,7 @@ function loadConfig(cwd) {
     );
   }
 
-  return { apiKey, decryptionKey, fileLink, baseUrl };
+  return { decryptionKey, fileLink, baseUrl };
 }
 
 function decryptionKeyToBuffer(rawKey) {
@@ -94,7 +87,6 @@ function parseValuesJson(json) {
 
 class Vault {
   constructor(config) {
-    this.apiKey = config.apiKey;
     this.decryptionKey = config.decryptionKey;
     this.fileLink = config.fileLink;
     this.baseUrl = config.baseUrl.replace(/\/$/, "");
@@ -105,7 +97,7 @@ class Vault {
   async init() {
     const url = `${this.baseUrl}/api/v1/vault/${encodeURIComponent(this.fileLink)}`;
     const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${this.apiKey}` },
+      headers: { Authorization: `Bearer ${this.decryptionKey}` },
     });
     const body = await response.json().catch(() => ({}));
 

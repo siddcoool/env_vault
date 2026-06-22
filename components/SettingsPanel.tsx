@@ -103,8 +103,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <section className="rounded-lg border p-4">
           <h2 className="font-medium">Workspace decryption key</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Used by client apps to decrypt env values fetched from the API. Current
-            key prefix: <code>{workspace.decryptionKeyPrefix}…</code>
+            Authenticates API requests and decrypts env values in client apps.
+            Current key prefix: <code>{workspace.decryptionKeyPrefix}…</code>
           </p>
           {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
           <Button

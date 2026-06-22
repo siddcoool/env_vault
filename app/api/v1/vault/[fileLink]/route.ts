@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Types } from "mongoose";
 import { connectDb } from "@/lib/mongoose";
-import { authenticateApiKey } from "@/lib/api-key-auth";
-import { extractBearerToken } from "@/lib/api-key-utils";
+import {
+  authenticateDecryptionKey,
+  extractBearerToken,
+} from "@/lib/workspace-auth";
 import { ProjectModel } from "@/models/Project";
 
 interface EnvFileDoc {
@@ -30,14 +32,17 @@ export async function GET(
 
   if (!token) {
     return NextResponse.json(
-      { error: "Missing Authorization header. Use: Bearer <api_key>" },
+      { error: "Missing Authorization header. Use: Bearer <decryption_key>" },
       { status: 401 },
     );
   }
 
-  const apiKey = await authenticateApiKey(token);
-  if (!apiKey) {
-    return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
+  const auth = await authenticateDecryptionKey(token);
+  if (!auth) {
+    return NextResponse.json(
+      { error: "Invalid workspace decryption key" },
+      { status: 401 },
+    );
   }
 
   const { fileLink } = await context.params;
@@ -57,7 +62,7 @@ export async function GET(
     return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
 
-  if (project.workspaceId.toString() !== apiKey.workspaceId) {
+  if (project.workspaceId.toString() !== auth.workspaceId) {
     return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
 

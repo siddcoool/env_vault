@@ -18,11 +18,9 @@ interface LayoutProps {
   projects: Project[];
   selectedProjectId: string | null;
   onNavigateHome: () => void;
-  onNavigateApiKeys: () => void;
   onNavigateSettings: () => void;
   onSelectProject: (project: Project) => void;
   isHome: boolean;
-  isApiKeys: boolean;
   isSettings: boolean;
   currentProjectName?: string;
   workspaceName?: string;
@@ -34,11 +32,9 @@ export const Layout: React.FC<LayoutProps> = ({
   projects,
   selectedProjectId,
   onNavigateHome,
-  onNavigateApiKeys,
   onNavigateSettings,
   onSelectProject,
   isHome,
-  isApiKeys,
   isSettings,
   currentProjectName,
   workspaceName,
@@ -52,10 +48,8 @@ export const Layout: React.FC<LayoutProps> = ({
         projects={projects}
         selectedProjectId={selectedProjectId}
         isHome={isHome}
-        isApiKeys={isApiKeys}
         isSettings={isSettings}
         onNavigateHome={onNavigateHome}
-        onNavigateApiKeys={onNavigateApiKeys}
         onNavigateSettings={onNavigateSettings}
         onSelectProject={onSelectProject}
         workspaceName={workspaceName}
@@ -72,7 +66,7 @@ export const Layout: React.FC<LayoutProps> = ({
             >
               Projects
             </button>
-            {!isHome && !isApiKeys && !isSettings && currentProjectName && (
+            {!isHome && !isSettings && currentProjectName && (
               <>
                 <span className="mx-1 opacity-40">/</span>
                 <span className="text-foreground font-medium">{currentProjectName}</span>

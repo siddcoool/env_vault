@@ -5,9 +5,7 @@ import {
 } from "./decrypt-workspace";
 
 export interface VaultConfig {
-  /** Workspace API key (evk_...) */
-  apiKey: string;
-  /** Workspace decryption key (wdk_...) */
+  /** Workspace decryption key (wdk_...) — used for API auth and decryption */
   decryptionKey: string;
   /** Unique file link (vl_...) */
   fileLink: string;
@@ -23,7 +21,6 @@ interface VaultApiResponse {
 }
 
 export class Vault {
-  private apiKey: string;
   private decryptionKey: string;
   private fileLink: string;
   private baseUrl: string;
@@ -31,7 +28,6 @@ export class Vault {
   private initialized = false;
 
   constructor(config: VaultConfig) {
-    this.apiKey = config.apiKey;
     this.decryptionKey = config.decryptionKey;
     this.fileLink = config.fileLink;
     this.baseUrl = config.baseUrl.replace(/\/$/, "");
@@ -43,7 +39,7 @@ export class Vault {
 
     const response = await fetch(url, {
       headers: {
-        Authorization: `Bearer ${this.apiKey}`,
+        Authorization: `Bearer ${this.decryptionKey}`,
       },
     });
 

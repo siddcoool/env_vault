@@ -11,8 +11,7 @@ npm install env_vault
 ## Setup
 
 1. Register an account — save your **workspace decryption key** (`wdk_...`).
-2. Create an **API key** (`evk_...`) in the dashboard.
-3. Copy a file's **file link** (`vl_...`) from the project detail view.
+2. Copy a file's **file link** (`vl_...`) from the project detail view.
 
 ## Usage
 
@@ -20,7 +19,6 @@ npm install env_vault
 import { Vault } from "env_vault";
 
 const vault = new Vault({
-  apiKey: process.env.ENVVAULT_API_KEY!,
   decryptionKey: process.env.ENVVAULT_DECRYPTION_KEY!,
   fileLink: process.env.ENVVAULT_FILE_LINK!,
   baseUrl: "https://your-envvault.example.com",
@@ -39,8 +37,7 @@ const all = vault.getAll();
 
 | Option | Description |
 |--------|-------------|
-| `apiKey` | Your `evk_...` API key |
-| `decryptionKey` | Workspace `wdk_...` decryption key |
+| `decryptionKey` | Workspace `wdk_...` key — used for API auth and decryption |
 | `fileLink` | File link `vl_...` from the dashboard |
 | `baseUrl` | EnvVault server URL |
 
@@ -64,7 +61,7 @@ Re-fetches values from the server.
 
 ```
 GET /api/v1/vault/vl_abc123
-Authorization: Bearer evk_...
+Authorization: Bearer wdk_...
 ```
 
 See **`docs/client-sdk.md`** in the EnvVault repo.

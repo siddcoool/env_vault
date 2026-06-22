@@ -52,8 +52,8 @@ export default function RegisterPage() {
         <div className="w-full max-w-lg rounded-xl border bg-background p-8 shadow-sm">
           <h1 className="text-2xl font-bold">Save your decryption key</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            This key decrypts env values in your apps. It will not be shown again.
-            Store it securely alongside your API keys.
+            This key authenticates API requests and decrypts env values in your apps.
+            It will not be shown again — store it securely.
           </p>
 
           <div className="mt-6">

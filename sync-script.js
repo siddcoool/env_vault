@@ -6,12 +6,12 @@
  *   node sync-script.js
  *
  * Configuration (in order of precedence):
- *   1. Shell environment variables: ENVVAULT_API_KEY, ENVVAULT_PROJECT, ENVVAULT_BASE_URL
+ *   1. Shell environment variables: ENVVAULT_DECRYPTION_KEY, ENVVAULT_PROJECT, ENVVAULT_BASE_URL
  *   2. .envvault.json in the current directory
  *
  * Example .envvault.json:
  * {
- *   "apiKey": "evk_your_api_key_here",
+ *   "decryptionKey": "wdk_your_workspace_key_here",
  *   "baseUrl": "https://env.classyendeavors.com",
  *   "project": "my-app",
  *   "createProject": true,
@@ -19,7 +19,7 @@
  * }
  *
  * If "files" is omitted, all .env* files in the directory are synced.
- * Add apiKey to .envvault.json (gitignored) — do not commit API keys to git.
+ * Add decryptionKey to .envvault.json (gitignored) — do not commit keys to git.
  */
 
 const fs = require("fs");
@@ -44,7 +44,8 @@ function loadConfig(cwd) {
   const fileConfig = readJsonConfig(cwd);
   const folderName = path.basename(path.resolve(cwd));
 
-  const apiKey = process.env.ENVVAULT_API_KEY || fileConfig.apiKey;
+  const decryptionKey =
+    process.env.ENVVAULT_DECRYPTION_KEY || fileConfig.decryptionKey;
   const baseUrl = (
     process.env.ENVVAULT_BASE_URL ||
     fileConfig.baseUrl ||
@@ -59,13 +60,13 @@ function loadConfig(cwd) {
     process.env.ENVVAULT_DESCRIPTION || fileConfig.description || "";
   const files = fileConfig.files;
 
-  if (!apiKey) {
+  if (!decryptionKey) {
     throw new Error(
-      "Missing API key. Set ENVVAULT_API_KEY in your shell or add apiKey to .envvault.json",
+      "Missing decryption key. Set ENVVAULT_DECRYPTION_KEY in your shell or add decryptionKey to .envvault.json",
     );
   }
 
-  return { apiKey, baseUrl, project, createProject, description, files };
+  return { decryptionKey, baseUrl, project, createProject, description, files };
 }
 
 function discoverEnvFiles(cwd) {
@@ -101,7 +102,7 @@ async function syncToVault(config, files) {
   const response = await fetch(`${config.baseUrl}/api/v1/env`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${config.apiKey}`,
+      Authorization: `Bearer ${config.decryptionKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({

@@ -28,22 +28,22 @@ SESSION_SECRET="dev-session-secret-min-32-chars-long!!"
 
 ## Programmatic API access
 
-Fetch env values using an API key, workspace decryption key, and file link.
+Fetch and sync env values using your workspace decryption key and file link.
 
 ### Download endpoint
 
 ```
 GET /api/v1/vault/{fileLink}
-Authorization: Bearer evk_<your_api_key>
+Authorization: Bearer wdk_<your_decryption_key>
 ```
 
-Response contains an AES-encrypted JSON object. Decrypt with your workspace decryption key (`wdk_...`).
+Response contains an AES-encrypted JSON object. Decrypt with the same workspace decryption key.
 
 ### Sync API (upload)
 
 ```
 PUT /api/v1/env
-Authorization: Bearer evk_<your_api_key>
+Authorization: Bearer wdk_<your_decryption_key>
 Content-Type: application/json
 
 {
@@ -62,7 +62,6 @@ See **`docs/client-sdk.md`** and **`packages/env_vault/README.md`**.
 import { Vault } from "env_vault";
 
 const vault = new Vault({
-  apiKey: process.env.ENVVAULT_API_KEY!,
   decryptionKey: process.env.ENVVAULT_DECRYPTION_KEY!,
   fileLink: process.env.ENVVAULT_FILE_LINK!,
   baseUrl: "https://your-envvault.example.com",

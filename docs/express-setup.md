@@ -16,9 +16,8 @@ npm run dev
 ## Prerequisites
 
 1. **EnvVault account** with a project and env file.
-2. **API key** (`evk_...`) from EnvVault UI → **API Keys**.
-3. **Workspace decryption key** (`wdk_...`) — shown once at registration (or regenerated in Settings).
-4. **File link** (`vl_...`) — copy from the file detail view in the dashboard.
+2. **Workspace decryption key** (`wdk_...`) — shown once at registration (or regenerated in Settings).
+3. **File link** (`vl_...`) — copy from the file detail view in the dashboard.
 
 ## Quick start
 
@@ -35,7 +34,6 @@ npm run dev
 
 ```json
 {
-  "apiKey": "evk_your_api_key_here",
   "decryptionKey": "wdk_your_workspace_key_here",
   "fileLink": "vl_your_file_link_here",
   "baseUrl": "https://your-envvault.example.com"
@@ -45,7 +43,6 @@ npm run dev
 Or set environment variables:
 
 ```bash
-export ENVVAULT_API_KEY="evk_..."
 export ENVVAULT_DECRYPTION_KEY="wdk_..."
 export ENVVAULT_FILE_LINK="vl_..."
 export ENVVAULT_BASE_URL="https://your-envvault.example.com"
@@ -60,7 +57,6 @@ const { Vault } = require("./envvault-shared");
 
 async function main() {
   const vault = new Vault({
-    apiKey: process.env.ENVVAULT_API_KEY,
     decryptionKey: process.env.ENVVAULT_DECRYPTION_KEY,
     fileLink: process.env.ENVVAULT_FILE_LINK,
     baseUrl: process.env.ENVVAULT_BASE_URL,

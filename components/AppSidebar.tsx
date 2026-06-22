@@ -1,6 +1,6 @@
 "use client";
 
-import { Database, FolderOpen, Key, LayoutDashboard, Settings } from "lucide-react";
+import { Database, FolderOpen, LayoutDashboard, Settings } from "lucide-react";
 import { Project } from "@/types";
 import {
   formatRelativeTime,
@@ -25,10 +25,8 @@ interface AppSidebarProps {
   projects: Project[];
   selectedProjectId: string | null;
   isHome: boolean;
-  isApiKeys: boolean;
   isSettings: boolean;
   onNavigateHome: () => void;
-  onNavigateApiKeys: () => void;
   onNavigateSettings: () => void;
   onSelectProject: (project: Project) => void;
   workspaceName?: string;
@@ -39,10 +37,8 @@ export function AppSidebar({
   projects,
   selectedProjectId,
   isHome,
-  isApiKeys,
   isSettings,
   onNavigateHome,
-  onNavigateApiKeys,
   onNavigateSettings,
   onSelectProject,
   workspaceName,
@@ -79,16 +75,6 @@ export function AppSidebar({
                 >
                   <LayoutDashboard />
                   <span>Projects</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  isActive={isApiKeys}
-                  onClick={onNavigateApiKeys}
-                  tooltip="API Keys"
-                >
-                  <Key />
-                  <span>API Keys</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
