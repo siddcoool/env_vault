@@ -3,57 +3,82 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { loginUser, logoutUser, registerUser } from "@/lib/auth";
+import {
+  getPrimaryAuthError,
+  validateLoginInput,
+  validateRegisterInput,
+  type AuthFieldErrors,
+} from "@/lib/auth-validation";
 
-export async function registerAction(formData: FormData): Promise<{
+export interface AuthActionResult {
   success: boolean;
   error?: string;
+  fieldErrors?: AuthFieldErrors;
   decryptionKey?: string;
-}> {
-  const email = String(formData.get("email") || "").trim();
+}
+
+function authFailure(fieldErrors: AuthFieldErrors): AuthActionResult {
+  return {
+    success: false,
+    fieldErrors,
+    error: getPrimaryAuthError(fieldErrors),
+  };
+}
+
+export async function registerAction(formData: FormData): Promise<AuthActionResult> {
+  const email = String(formData.get("email") || "");
   const password = String(formData.get("password") || "");
   const name = String(formData.get("name") || "").trim();
 
-  if (!email || !password) {
-    return { success: false, error: "Email and password are required" };
-  }
-
-  if (password.length < 8) {
-    return { success: false, error: "Password must be at least 8 characters" };
+  const validationErrors = validateRegisterInput({ email, password, name });
+  if (validationErrors) {
+    return authFailure(validationErrors);
   }
 
   try {
-    const result = await registerUser({ email, password, name: name || undefined });
+    const result = await registerUser({
+      email: email.trim(),
+      password,
+      name: name || undefined,
+    });
     revalidatePath("/");
     return { success: true, decryptionKey: result.decryptionKey };
   } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Registration failed",
-    };
+    if (error instanceof Error && error.message === "Email already registered") {
+      return authFailure({
+        email: "An account with this email already exists",
+      });
+    }
+
+    return authFailure({
+      form: error instanceof Error ? error.message : "Registration failed",
+    });
   }
 }
 
-export async function loginAction(formData: FormData): Promise<{
-  success: boolean;
-  error?: string;
-}> {
-  const email = String(formData.get("email") || "").trim();
+export async function loginAction(formData: FormData): Promise<AuthActionResult> {
+  const email = String(formData.get("email") || "");
   const password = String(formData.get("password") || "");
 
-  if (!email || !password) {
-    return { success: false, error: "Email and password are required" };
+  const validationErrors = validateLoginInput({ email, password });
+  if (validationErrors) {
+    return authFailure(validationErrors);
   }
 
   try {
-    await loginUser({ email, password });
-    revalidatePath("/");
-    redirect("/");
+    await loginUser({ email: email.trim(), password });
   } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Login failed",
-    };
+    if (error instanceof Error && error.message === "Invalid email or password") {
+      return authFailure({ form: error.message });
+    }
+
+    return authFailure({
+      form: error instanceof Error ? error.message : "Login failed",
+    });
   }
+
+  revalidatePath("/");
+  redirect("/");
 }
 
 export async function logoutAction(): Promise<void> {

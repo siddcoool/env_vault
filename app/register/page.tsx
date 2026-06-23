@@ -5,27 +5,42 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Database, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { AuthField } from "@/components/auth/AuthField";
 import { registerAction } from "@/app/authActions";
+import {
+  validateRegisterInput,
+  type AuthFieldErrors,
+} from "@/lib/auth-validation";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<AuthFieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [decryptionKey, setDecryptionKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
-    setIsSubmitting(true);
+    setFieldErrors({});
 
     const formData = new FormData(e.currentTarget);
+    const email = String(formData.get("email") || "");
+    const password = String(formData.get("password") || "");
+    const name = String(formData.get("name") || "").trim();
+
+    const clientErrors = validateRegisterInput({ email, password, name });
+    if (clientErrors) {
+      setFieldErrors(clientErrors);
+      return;
+    }
+
+    setIsSubmitting(true);
+
     const result = await registerAction(formData);
     setIsSubmitting(false);
 
     if (!result.success) {
-      setError(result.error ?? "Registration failed");
+      setFieldErrors(result.fieldErrors ?? { form: result.error });
       return;
     }
 
@@ -91,26 +106,39 @@ export default function RegisterPage() {
           Your workspace will be created automatically
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium">Name</label>
-            <Input name="name" type="text" autoComplete="name" />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium">Email</label>
-            <Input name="email" type="email" required autoComplete="email" />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium">Password</label>
-            <Input
-              name="password"
-              type="password"
-              required
-              minLength={8}
-              autoComplete="new-password"
-            />
-          </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4" noValidate>
+          <AuthField
+            label="Name"
+            name="name"
+            type="text"
+            autoComplete="name"
+            error={fieldErrors.name}
+          />
+          <AuthField
+            label="Email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            error={fieldErrors.email}
+            required
+          />
+          <AuthField
+            label="Password"
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            error={fieldErrors.password}
+            minLength={8}
+            required
+          />
+          <p className="text-xs text-muted-foreground">
+            Use at least 8 characters.
+          </p>
+          {fieldErrors.form && (
+            <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {fieldErrors.form}
+            </p>
+          )}
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? "Creating account…" : "Create account"}
           </Button>

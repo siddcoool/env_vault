@@ -5,28 +5,43 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { AuthField } from "@/components/auth/AuthField";
 import { loginAction } from "@/app/authActions";
+import {
+  validateLoginInput,
+  type AuthFieldErrors,
+} from "@/lib/auth-validation";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<AuthFieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
-    setIsSubmitting(true);
+    setFieldErrors({});
 
     const formData = new FormData(e.currentTarget);
+    const email = String(formData.get("email") || "");
+    const password = String(formData.get("password") || "");
+
+    const clientErrors = validateLoginInput({ email, password });
+    if (clientErrors) {
+      setFieldErrors(clientErrors);
+      return;
+    }
+
+    setIsSubmitting(true);
+
     const result = await loginAction(formData);
 
-    if (result?.error) {
-      setError(result.error);
+    if (!result.success) {
+      setFieldErrors(result.fieldErrors ?? { form: result.error });
       setIsSubmitting(false);
-    } else {
-      router.refresh();
+      return;
     }
+
+    router.refresh();
   };
 
   return (
@@ -42,21 +57,28 @@ export default function LoginPage() {
           Access your workspace vault
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium">Email</label>
-            <Input name="email" type="email" required autoComplete="email" />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium">Password</label>
-            <Input
-              name="password"
-              type="password"
-              required
-              autoComplete="current-password"
-            />
-          </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4" noValidate>
+          <AuthField
+            label="Email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            error={fieldErrors.email}
+            required
+          />
+          <AuthField
+            label="Password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            error={fieldErrors.password}
+            required
+          />
+          {fieldErrors.form && (
+            <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {fieldErrors.form}
+            </p>
+          )}
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? "Signing in…" : "Sign in"}
           </Button>
