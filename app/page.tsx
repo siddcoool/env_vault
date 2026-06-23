@@ -1,18 +1,22 @@
 import { EnvVaultApp } from "./EnvVaultApp";
 import { getProjectsFromDb } from "./actions";
-import { getApiKeysFromDb } from "./apiKeyActions";
-import { AppGate } from "./AppGate";
+import { getWorkspaceInfoAction } from "./workspaceActions";
+import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [projects, apiKeys] = await Promise.all([
+  const session = await getSession();
+  const [projects, workspace] = await Promise.all([
     getProjectsFromDb(),
-    getApiKeysFromDb(),
+    getWorkspaceInfoAction(),
   ]);
+
   return (
-    <AppGate>
-      <EnvVaultApp initialProjects={projects} initialApiKeys={apiKeys} />
-    </AppGate>
+    <EnvVaultApp
+      initialProjects={projects}
+      workspace={workspace}
+      userEmail={session.email ?? ""}
+    />
   );
 }

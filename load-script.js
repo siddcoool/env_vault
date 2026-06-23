@@ -8,17 +8,14 @@
  *   node load-script.js --check      # validate fetch + decrypt only
  *
  * Configuration (in order of precedence):
- *   1. Shell: ENVVAULT_API_KEY, ENVVAULT_PROJECT, ENVVAULT_FILE, ENVVAULT_BASE_URL,
- *             ENVVAULT_PRIVATE_KEY or ENVVAULT_PRIVATE_KEY_PATH
+ *   1. Shell: ENVVAULT_DECRYPTION_KEY, ENVVAULT_FILE_LINK, ENVVAULT_BASE_URL
  *   2. .envvault.json in the current directory
  *
  * Example .envvault.json:
  * {
- *   "apiKey": "evk_your_api_key_here",
- *   "baseUrl": "https://env.classyendeavors.com",
- *   "project": "my-app",
- *   "loadFile": ".env",
- *   "privateKeyPath": "./private.pem"
+ *   "decryptionKey": "wdk_your_workspace_key_here",
+ *   "fileLink": "vl_your_file_link_here",
+ *   "baseUrl": "https://env.classyendeavors.com"
  * }
  */
 

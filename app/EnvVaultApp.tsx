@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Layout } from "../components/Layout";
 import { ProjectList } from "../components/ProjectList";
 import { ProjectDetail } from "../components/ProjectDetail";
-import { Project, ViewState, ApiKey } from "../types";
+import { Project, ViewState, WorkspaceInfo } from "../types";
 import { ThemeProvider } from "../context/ThemeContext";
 import {
   createProjectAction,
@@ -13,29 +13,26 @@ import {
   updateEnvFileAction,
   deleteEnvFileAction,
 } from "./actions";
-import { ApiKeysPanel } from "../components/ApiKeysPanel";
+import { SettingsPanel } from "../components/SettingsPanel";
 
 interface EnvVaultAppProps {
   initialProjects: Project[];
-  initialApiKeys: ApiKey[];
+  workspace: WorkspaceInfo | null;
+  userEmail: string;
 }
 
 export const EnvVaultApp: React.FC<EnvVaultAppProps> = ({
   initialProjects,
-  initialApiKeys,
+  workspace,
+  userEmail,
 }) => {
   const [view, setView] = useState<ViewState>(ViewState.DASHBOARD);
   const [projects, setProjects] = useState<Project[]>(initialProjects);
-  const [apiKeys, setApiKeys] = useState<ApiKey[]>(initialApiKeys);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   useEffect(() => {
     setProjects(initialProjects);
   }, [initialProjects]);
-
-  useEffect(() => {
-    setApiKeys(initialApiKeys);
-  }, [initialApiKeys]);
 
   const handleSelectProject = (project: Project) => {
     setSelectedProject(project);
@@ -64,8 +61,8 @@ export const EnvVaultApp: React.FC<EnvVaultAppProps> = ({
     setSelectedProject(null);
   };
 
-  const handleNavigateApiKeys = () => {
-    setView(ViewState.API_KEYS);
+  const handleNavigateSettings = () => {
+    setView(ViewState.SETTINGS);
     setSelectedProject(null);
   };
 
@@ -102,11 +99,13 @@ export const EnvVaultApp: React.FC<EnvVaultAppProps> = ({
         projects={projects}
         selectedProjectId={currentSelected?.id ?? null}
         onNavigateHome={handleNavigateHome}
-        onNavigateApiKeys={handleNavigateApiKeys}
+        onNavigateSettings={handleNavigateSettings}
         onSelectProject={handleSelectProject}
         isHome={view === ViewState.DASHBOARD}
-        isApiKeys={view === ViewState.API_KEYS}
+        isSettings={view === ViewState.SETTINGS}
         currentProjectName={currentSelected?.name}
+        workspaceName={workspace?.name}
+        userEmail={userEmail}
       >
         {view === ViewState.DASHBOARD && (
           <ProjectList
@@ -125,12 +124,10 @@ export const EnvVaultApp: React.FC<EnvVaultAppProps> = ({
             onDeleteEnv={handleDeleteEnv}
           />
         )}
-        {view === ViewState.API_KEYS && (
-          <ApiKeysPanel apiKeys={apiKeys} />
+        {view === ViewState.SETTINGS && workspace && (
+          <SettingsPanel workspace={workspace} userEmail={userEmail} />
         )}
       </Layout>
     </ThemeProvider>
   );
 };
-
-

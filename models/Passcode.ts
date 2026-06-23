@@ -16,12 +16,7 @@ const PasscodeSchema = new Schema(
     createdAt: { type: String, required: false },
     updatedAt: { type: String, required: false },
   },
-  {
-    collection: "passcodes",
-  },
+  { collection: "passcodes" },
 );
 
-export const PasscodeModel =
-  models.Passcode || model("Passcode", PasscodeSchema);
-
-
+export const PasscodeModel = models.Passcode || model("Passcode", PasscodeSchema);

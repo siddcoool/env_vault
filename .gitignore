@@ -2,8 +2,6 @@
 
 # dependencies
 /node_modules
-/packages/env_vault/node_modules
-/packages/env_vault/dist
 /.pnp
 .pnp.*
 .yarn/*

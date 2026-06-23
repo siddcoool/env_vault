@@ -1,30 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDb } from "@/lib/mongoose";
-import { authenticateApiKey } from "@/lib/api-key-auth";
-import { extractBearerToken } from "@/lib/api-key-utils";
+import {
+  authenticateDecryptionKey,
+  extractBearerToken,
+} from "@/lib/workspace-auth";
 import { EnvSyncError, upsertEnvFile } from "@/lib/env-sync";
-import { normalizeEnvFileName, projectNameRegex } from "@/lib/env-vault-utils";
-import { ProjectModel } from "@/models/Project";
-
-interface EnvFileDoc {
-  id: string;
-  name: string;
-  contentEncPublic?: Array<{
-    apiKeyId: string;
-    payload: {
-      encryptedKey: string;
-      iv: string;
-      authTag: string;
-      ciphertext: string;
-    };
-  }>;
-  updatedAt?: string;
-}
-
-interface ProjectLean {
-  name: string;
-  envFiles?: EnvFileDoc[];
-}
 
 interface SyncFileInput {
   file: string;
@@ -46,26 +25,31 @@ interface PostSyncBody {
   description?: string;
 }
 
-async function requireApiKey(request: NextRequest) {
+async function requireDecryptionKey(request: NextRequest) {
   const token = extractBearerToken(request.headers.get("authorization"));
 
   if (!token) {
     return {
       error: NextResponse.json(
-        { error: "Missing Authorization header. Use: Bearer <api_key>" },
+        {
+          error: "Missing Authorization header. Use: Bearer <decryption_key>",
+        },
         { status: 401 },
       ),
     };
   }
 
-  const apiKey = await authenticateApiKey(token);
-  if (!apiKey) {
+  const auth = await authenticateDecryptionKey(token);
+  if (!auth) {
     return {
-      error: NextResponse.json({ error: "Invalid API key" }, { status: 401 }),
+      error: NextResponse.json(
+        { error: "Invalid workspace decryption key" },
+        { status: 401 },
+      ),
     };
   }
 
-  return { apiKey };
+  return { auth };
 }
 
 function syncErrorResponse(error: unknown) {
@@ -75,67 +59,12 @@ function syncErrorResponse(error: unknown) {
   throw error;
 }
 
-export async function GET(request: NextRequest) {
-  const auth = await requireApiKey(request);
-  if ("error" in auth) return auth.error;
-
-  const { apiKey } = auth;
-  const projectName = request.nextUrl.searchParams.get("project")?.trim();
-  const fileName = request.nextUrl.searchParams.get("file")?.trim();
-
-  if (!projectName || !fileName) {
-    return NextResponse.json(
-      { error: "Query params 'project' and 'file' are required" },
-      { status: 400 },
-    );
-  }
-
-  await connectDb();
-
-  const project = await ProjectModel.findOne({
-    name: { $regex: projectNameRegex(projectName) },
-  }).lean<ProjectLean>();
-
-  if (!project) {
-    return NextResponse.json({ error: "Project not found" }, { status: 404 });
-  }
-
-  const normalizedFile = normalizeEnvFileName(fileName);
-  const envFiles = (project.envFiles as EnvFileDoc[] | undefined) ?? [];
-  const envFile = envFiles.find(
-    (f) => f.name.toLowerCase() === normalizedFile.toLowerCase(),
-  );
-
-  if (!envFile) {
-    return NextResponse.json({ error: "Env file not found" }, { status: 404 });
-  }
-
-  const encrypted = envFile.contentEncPublic?.find(
-    (e) => e.apiKeyId === apiKey.id,
-  );
-
-  if (!encrypted) {
-    return NextResponse.json(
-      {
-        error:
-          "No encrypted content available for this API key. Re-save the env file after creating the key.",
-      },
-      { status: 404 },
-    );
-  }
-
-  return NextResponse.json({
-    project: project.name,
-    file: envFile.name,
-    updatedAt: envFile.updatedAt ?? null,
-    encrypted: encrypted.payload,
-  });
-}
-
 /** Upsert a single env file (create project/file if requested). */
 export async function PUT(request: NextRequest) {
-  const auth = await requireApiKey(request);
-  if ("error" in auth) return auth.error;
+  const authResult = await requireDecryptionKey(request);
+  if ("error" in authResult) return authResult.error;
+
+  const { auth } = authResult;
 
   let body: PutEnvBody;
   try {
@@ -163,6 +92,7 @@ export async function PUT(request: NextRequest) {
 
   try {
     const result = await upsertEnvFile({
+      workspaceId: auth.workspaceId,
       projectName: project,
       fileName: file,
       content: body.content,
@@ -178,8 +108,10 @@ export async function PUT(request: NextRequest) {
 
 /** Bulk sync multiple env files into a project. */
 export async function POST(request: NextRequest) {
-  const auth = await requireApiKey(request);
-  if ("error" in auth) return auth.error;
+  const authResult = await requireDecryptionKey(request);
+  if ("error" in authResult) return authResult.error;
+
+  const { auth } = authResult;
 
   let body: PostSyncBody;
   try {
@@ -226,6 +158,7 @@ export async function POST(request: NextRequest) {
     for (let i = 0; i < body.files.length; i++) {
       const entry = body.files[i];
       const result = await upsertEnvFile({
+        workspaceId: auth.workspaceId,
         projectName: project,
         fileName: entry.file,
         content: entry.content,
@@ -238,6 +171,7 @@ export async function POST(request: NextRequest) {
       }
       results.push({
         file: result.file,
+        fileLink: result.fileLink,
         created: result.created,
         updatedAt: result.updatedAt,
       });
