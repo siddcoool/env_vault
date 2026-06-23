@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { loginUser, logoutUser, registerUser } from "@/lib/auth";
+import { verifyLegacyPasscode } from "@/lib/legacy-auth";
+import { getSession } from "@/lib/session";
 import {
   getPrimaryAuthError,
   validateLoginInput,
@@ -83,6 +85,35 @@ export async function loginAction(formData: FormData): Promise<AuthActionResult>
 
 export async function logoutAction(): Promise<void> {
   await logoutUser();
+  revalidatePath("/");
+  redirect("/login");
+}
+
+export async function legacyLoginAction(
+  formData: FormData,
+): Promise<AuthActionResult> {
+  const passcode = String(formData.get("passcode") || "");
+
+  if (!passcode) {
+    return authFailure({ form: "Passcode is required" });
+  }
+
+  const isValid = await verifyLegacyPasscode(passcode);
+  if (!isValid) {
+    return authFailure({ form: "Invalid passcode" });
+  }
+
+  const session = await getSession();
+  session.isLegacySession = true;
+  await session.save();
+
+  revalidatePath("/legacy");
+  return { success: true };
+}
+
+export async function legacyLogoutAction(): Promise<void> {
+  const session = await getSession();
+  session.destroy();
   revalidatePath("/");
   redirect("/login");
 }

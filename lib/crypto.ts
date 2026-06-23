@@ -2,7 +2,16 @@ import crypto from "crypto";
 
 let cachedKey: Buffer | null = null;
 
-// Expect a 32-byte key (256-bit) provided as hex or base64.
+/**
+ * Resolves the 32-byte AES-256 key from ENCRYPTION_KEY.
+ *
+ * Accepted formats (checked in order, first 32-byte match wins):
+ *  1. 64 lower-case hex characters  (e.g. output of `openssl rand -hex 32`)
+ *  2. 43-44 base64 / base64url characters (e.g. output of `openssl rand -base64 32`)
+ *
+ * Any other length or format throws immediately so misconfiguration is caught
+ * at startup rather than silently producing wrong cipher keys.
+ */
 function getKey(): Buffer {
   if (cachedKey) return cachedKey;
 
@@ -11,38 +20,25 @@ function getKey(): Buffer {
     throw new Error("ENCRYPTION_KEY environment variable is not set");
   }
 
-  // Try base64 then hex; fall back to utf8 (for simple dev keys).
-  try {
-    const buf = Buffer.from(rawKey, "base64");
-    if (buf.length === 32) {
-      cachedKey = buf;
-      return buf;
-    }
-  } catch {
-    // ignore
-  }
-
-  try {
-    const buf = Buffer.from(rawKey, "hex");
-    if (buf.length === 32) {
-      cachedKey = buf;
-      return buf;
-    }
-  } catch {
-    // ignore
-  }
-
-  const utf8 = Buffer.from(rawKey, "utf8");
-  if (utf8.length >= 32) {
-    cachedKey = utf8.subarray(0, 32);
+  // 1. Try hex (64 chars → 32 bytes).
+  if (/^[0-9a-fA-F]{64}$/.test(rawKey)) {
+    cachedKey = Buffer.from(rawKey, "hex");
     return cachedKey;
   }
 
-  // Pad to 32 bytes for short dev keys.
-  const padded = Buffer.alloc(32);
-  utf8.copy(padded);
-  cachedKey = padded;
-  return padded;
+  // 2. Try base64 / base64url (strips padding, then decodes).
+  const b64Normalized = rawKey.replace(/-/g, "+").replace(/_/g, "/");
+  const b64Buf = Buffer.from(b64Normalized, "base64");
+  if (b64Buf.length === 32) {
+    cachedKey = b64Buf;
+    return cachedKey;
+  }
+
+  throw new Error(
+    `ENCRYPTION_KEY must be a 64-character hex string or a 32-byte base64 string. ` +
+      `Got ${rawKey.length} characters which decoded to ${b64Buf.length} bytes. ` +
+      `Generate a valid key with: openssl rand -hex 32`,
+  );
 }
 
 export interface EncryptedPayload {

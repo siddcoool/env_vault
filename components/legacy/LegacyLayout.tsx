@@ -2,9 +2,9 @@
 
 import React from "react";
 import { LogOut, Moon, Sun } from "lucide-react";
-import { logoutAction } from "@/app/authActions";
-import { Project } from "@/types";
-import { AppSidebar } from "@/components/AppSidebar";
+import { legacyLogoutAction } from "@/app/authActions";
+import { type LegacyProject } from "@/lib/legacy-auth";
+import { LegacySidebar } from "@/components/legacy/LegacySidebar";
 import {
   SidebarInset,
   SidebarProvider,
@@ -14,47 +14,35 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/context/ThemeContext";
 
-interface LayoutProps {
+interface LegacyLayoutProps {
   children: React.ReactNode;
-  projects: Project[];
+  projects: LegacyProject[];
   selectedProjectId: string | null;
   onNavigateHome: () => void;
-  onNavigateSettings: () => void;
-  onSelectProject: (project: Project) => void;
+  onSelectProject: (project: LegacyProject) => void;
   isHome: boolean;
-  isSettings: boolean;
   currentProjectName?: string;
-  workspaceName?: string;
-  userEmail?: string;
 }
 
-export const Layout: React.FC<LayoutProps> = ({
+export function LegacyLayout({
   children,
   projects,
   selectedProjectId,
   onNavigateHome,
-  onNavigateSettings,
   onSelectProject,
   isHome,
-  isSettings,
   currentProjectName,
-  workspaceName,
-  userEmail,
-}) => {
+}: LegacyLayoutProps) {
   const { isDarkMode, toggleTheme } = useTheme();
 
   return (
     <SidebarProvider>
-      <AppSidebar
+      <LegacySidebar
         projects={projects}
         selectedProjectId={selectedProjectId}
         isHome={isHome}
-        isSettings={isSettings}
         onNavigateHome={onNavigateHome}
-        onNavigateSettings={onNavigateSettings}
         onSelectProject={onSelectProject}
-        workspaceName={workspaceName}
-        userEmail={userEmail}
       />
       <SidebarInset>
         <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
@@ -63,29 +51,24 @@ export const Layout: React.FC<LayoutProps> = ({
           <nav className="flex flex-1 items-center gap-1 text-sm text-muted-foreground">
             <button
               onClick={onNavigateHome}
-              className="hover:text-foreground transition-colors"
+              className="transition-colors hover:text-foreground"
             >
               Projects
             </button>
-            {!isHome && !isSettings && currentProjectName && (
+            {!isHome && currentProjectName && (
               <>
                 <span className="mx-1 opacity-40">/</span>
-                <span className="text-foreground font-medium">{currentProjectName}</span>
+                <span className="font-medium text-foreground">{currentProjectName}</span>
               </>
             )}
           </nav>
           <div className="flex items-center gap-1">
-            {userEmail && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="gap-1.5"
-                onClick={() => void logoutAction()}
-              >
+            <form action={legacyLogoutAction}>
+              <Button type="submit" variant="ghost" size="sm" className="gap-1.5">
                 <LogOut className="size-4" />
                 Sign out
               </Button>
-            )}
+            </form>
             <Button
               variant="ghost"
               size="icon-sm"
@@ -96,10 +79,8 @@ export const Layout: React.FC<LayoutProps> = ({
             </Button>
           </div>
         </header>
-        <div className="flex flex-1 flex-col overflow-hidden">
-          {children}
-        </div>
+        <div className="flex flex-1 flex-col overflow-hidden">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   );
-};
+}

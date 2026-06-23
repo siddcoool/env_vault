@@ -6,6 +6,7 @@ export interface SessionData {
   workspaceId?: string;
   email?: string;
   isLoggedIn?: boolean;
+  isLegacySession?: boolean;
 }
 
 export const sessionOptions: SessionOptions = {

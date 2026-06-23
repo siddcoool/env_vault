@@ -42,7 +42,17 @@ interface ProjectDoc {
 }
 
 function mapEnvFile(env: EnvFileDoc): EnvFile {
-  const content = getPlaintextFromEnvFile(env, decrypt);
+  let content = "";
+  try {
+    content = getPlaintextFromEnvFile(env, decrypt);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(
+      `[env-vault] Failed to decrypt env file "${env.name}" (id: ${env.id}): ${message}. ` +
+        "This usually means ENCRYPTION_KEY changed after the file was saved. " +
+        "Restore the original key or re-save the file.",
+    );
+  }
   return {
     id: env.id,
     name: env.name,

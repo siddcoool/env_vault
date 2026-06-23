@@ -3,6 +3,7 @@ import { getIronSession } from "iron-session";
 import { sessionOptions, SessionData } from "@/lib/session";
 
 const publicPaths = ["/login", "/register"];
+const LEGACY_PATH = "/legacy";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -18,15 +19,27 @@ export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
   const session = await getIronSession<SessionData>(request, response, sessionOptions);
 
-  const isPublic = publicPaths.some((path) => pathname.startsWith(path));
+  const isPublicPath = publicPaths.some((path) => pathname.startsWith(path));
+  const isLegacyPath = pathname.startsWith(LEGACY_PATH);
 
-  if (!session.isLoggedIn && !isPublic) {
+  if (session.isLegacySession && !session.isLoggedIn) {
+    if (!isLegacyPath) {
+      return NextResponse.redirect(new URL(LEGACY_PATH, request.url));
+    }
+    return response;
+  }
+
+  if (!session.isLoggedIn && !isPublicPath) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  if (session.isLoggedIn && isPublic) {
+  if (session.isLoggedIn && isPublicPath) {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  if (session.isLoggedIn && isLegacyPath) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
