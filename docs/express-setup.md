@@ -86,6 +86,6 @@ async function main() {
 "dev": "node envvault-run.js nodemon server.js"
 ```
 
-## TypeScript / npm SDK
+## TypeScript client
 
-See **`docs/client-sdk.md`** for the `env_vault` npm package with the same `Vault` API.
+Copy **`client/env-vault.ts`** into your project and see **`docs/client-sdk.md`**.

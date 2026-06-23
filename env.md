@@ -56,19 +56,18 @@ Content-Type: application/json
 
 ### Client SDK
 
-See **`docs/client-sdk.md`** and **`packages/env_vault/README.md`**.
+Copy **`client/env-vault.ts`** into your server and see **`docs/client-sdk.md`**.
 
 ```typescript
-import { Vault } from "env_vault";
+import { initEnvVault, getKey } from "./env-vault";
 
-const vault = new Vault({
+await initEnvVault({
   decryptionKey: process.env.ENVVAULT_DECRYPTION_KEY!,
   fileLink: process.env.ENVVAULT_FILE_LINK!,
   baseUrl: "https://your-envvault.example.com",
 });
 
-await vault.init();
-const value = vault.getKey("OPENAI_KEY");
+const value = getKey("OPENAI_KEY");
 ```
 
 ### Migration from legacy data
