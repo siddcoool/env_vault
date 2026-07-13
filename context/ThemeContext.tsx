@@ -15,17 +15,18 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+function getInitialDarkMode(): boolean {
+  if (typeof window === "undefined") return true;
+  const saved = localStorage.getItem("env_vault_theme");
+  if (saved === "light") return false;
+  if (saved === "dark") return true;
+  return true;
+}
+
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("env_vault_theme");
-      if (saved) return saved === "dark";
-      return window.matchMedia("(prefers-color-scheme: dark)").matches;
-    }
-    return false;
-  });
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(getInitialDarkMode);
 
   useEffect(() => {
     const html = document.documentElement;
@@ -54,5 +55,3 @@ export const useTheme = () => {
   }
   return context;
 };
-
-

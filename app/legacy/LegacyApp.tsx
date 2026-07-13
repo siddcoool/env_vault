@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { ThemeProvider } from "@/context/ThemeContext";
 import { LegacyLayout } from "@/components/legacy/LegacyLayout";
 import { LegacyProjectList } from "@/components/legacy/LegacyProjectList";
 import { LegacyProjectDetail } from "@/components/legacy/LegacyProjectDetail";
@@ -23,27 +22,25 @@ export function LegacyApp({ initialProjects }: LegacyAppProps) {
   };
 
   return (
-    <ThemeProvider>
-      <LegacyLayout
-        projects={initialProjects}
-        selectedProjectId={selectedProject?.id ?? null}
-        onSelectProject={handleSelectProject}
-        onNavigateHome={handleNavigateHome}
-        isHome={selectedProject === null}
-        currentProjectName={selectedProject?.name}
-      >
-        {selectedProject === null ? (
-          <LegacyProjectList
-            projects={initialProjects}
-            onSelectProject={handleSelectProject}
-          />
-        ) : (
-          <LegacyProjectDetail
-            project={selectedProject}
-            onBack={handleNavigateHome}
-          />
-        )}
-      </LegacyLayout>
-    </ThemeProvider>
+    <LegacyLayout
+      projects={initialProjects}
+      selectedProjectId={selectedProject?.id ?? null}
+      onSelectProject={handleSelectProject}
+      onNavigateHome={handleNavigateHome}
+      isHome={selectedProject === null}
+      currentProjectName={selectedProject?.name}
+    >
+      {selectedProject === null ? (
+        <LegacyProjectList
+          projects={initialProjects}
+          onSelectProject={handleSelectProject}
+        />
+      ) : (
+        <LegacyProjectDetail
+          project={selectedProject}
+          onBack={handleNavigateHome}
+        />
+      )}
+    </LegacyLayout>
   );
 }

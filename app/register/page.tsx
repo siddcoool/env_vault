@@ -63,8 +63,8 @@ export default function RegisterPage() {
 
   if (decryptionKey) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
-        <div className="w-full max-w-lg rounded-xl border bg-background p-8 shadow-sm">
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <div className="w-full max-w-lg rounded-xl border bg-card p-8 shadow-sm">
           <h1 className="text-2xl font-bold">Save your decryption key</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             This key authenticates API requests and decrypts env values in your apps.
@@ -94,8 +94,8 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
-      <div className="w-full max-w-md rounded-xl border bg-background p-8 shadow-sm">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <div className="w-full max-w-md rounded-xl border bg-card p-8 shadow-sm">
         <div className="mb-8 flex items-center gap-2">
           <Database className="size-6 text-primary" />
           <span className="text-xl font-semibold">EnvVault</span>

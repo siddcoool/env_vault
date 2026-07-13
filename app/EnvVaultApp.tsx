@@ -5,7 +5,6 @@ import { Layout } from "../components/Layout";
 import { ProjectList } from "../components/ProjectList";
 import { ProjectDetail } from "../components/ProjectDetail";
 import { DocsClientScript, Project, ViewState, WorkspaceInfo } from "../types";
-import { ThemeProvider } from "../context/ThemeContext";
 import {
   createProjectAction,
   deleteProjectAction,
@@ -102,43 +101,41 @@ export const EnvVaultApp: React.FC<EnvVaultAppProps> = ({
       : selectedProject;
 
   return (
-    <ThemeProvider>
-      <Layout
-        projects={projects}
-        selectedProjectId={currentSelected?.id ?? null}
-        onNavigateHome={handleNavigateHome}
-        onNavigateSettings={handleNavigateSettings}
-        onNavigateDocs={handleNavigateDocs}
-        onSelectProject={handleSelectProject}
-        isHome={view === ViewState.DASHBOARD}
-        isSettings={view === ViewState.SETTINGS}
-        isDocs={view === ViewState.DOCS}
-        currentProjectName={currentSelected?.name}
-        workspaceName={workspace?.name}
-        userEmail={userEmail}
-      >
-        {view === ViewState.DASHBOARD && (
-          <ProjectList
-            projects={projects}
-            onSelectProject={handleSelectProject}
-            onAddProject={handleCreateProject}
-            onDeleteProject={handleDeleteProject}
-          />
-        )}
-        {view === ViewState.PROJECT_DETAIL && currentSelected && (
-          <ProjectDetail
-            project={currentSelected}
-            onBack={handleNavigateHome}
-            onAddEnv={handleAddEnv}
-            onUpdateEnv={handleUpdateEnv}
-            onDeleteEnv={handleDeleteEnv}
-          />
-        )}
-        {view === ViewState.DOCS && <DocsPanel scripts={docsScripts} />}
-        {view === ViewState.SETTINGS && workspace && (
-          <SettingsPanel workspace={workspace} userEmail={userEmail} />
-        )}
-      </Layout>
-    </ThemeProvider>
+    <Layout
+      projects={projects}
+      selectedProjectId={currentSelected?.id ?? null}
+      onNavigateHome={handleNavigateHome}
+      onNavigateSettings={handleNavigateSettings}
+      onNavigateDocs={handleNavigateDocs}
+      onSelectProject={handleSelectProject}
+      isHome={view === ViewState.DASHBOARD}
+      isSettings={view === ViewState.SETTINGS}
+      isDocs={view === ViewState.DOCS}
+      currentProjectName={currentSelected?.name}
+      workspaceName={workspace?.name}
+      userEmail={userEmail}
+    >
+      {view === ViewState.DASHBOARD && (
+        <ProjectList
+          projects={projects}
+          onSelectProject={handleSelectProject}
+          onAddProject={handleCreateProject}
+          onDeleteProject={handleDeleteProject}
+        />
+      )}
+      {view === ViewState.PROJECT_DETAIL && currentSelected && (
+        <ProjectDetail
+          project={currentSelected}
+          onBack={handleNavigateHome}
+          onAddEnv={handleAddEnv}
+          onUpdateEnv={handleUpdateEnv}
+          onDeleteEnv={handleDeleteEnv}
+        />
+      )}
+      {view === ViewState.DOCS && <DocsPanel scripts={docsScripts} />}
+      {view === ViewState.SETTINGS && workspace && (
+        <SettingsPanel workspace={workspace} userEmail={userEmail} />
+      )}
+    </Layout>
   );
 };

@@ -4,6 +4,10 @@ import React, { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { DocsClientScript } from "@/types";
+import {
+  highlightDocsCode,
+  type DocsCodeLanguage,
+} from "@/lib/docs-highlight";
 
 function Step({
   number,
@@ -27,11 +31,36 @@ function Step({
   );
 }
 
-function CodeBlock({ children }: { children: string }) {
+function CodeBlock({
+  children,
+  language = "javascript",
+}: {
+  children: string;
+  language?: DocsCodeLanguage;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(children);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <pre className="overflow-x-auto rounded border bg-muted p-3 text-xs text-foreground">
-      <code>{children}</code>
-    </pre>
+    <div className="relative overflow-hidden rounded border bg-muted">
+      <Button
+        variant="outline"
+        size="icon-sm"
+        className="absolute top-2 right-2 z-10 shrink-0 bg-background"
+        onClick={handleCopy}
+        aria-label="Copy code"
+      >
+        {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+      </Button>
+      <pre className="no-scrollbar overflow-x-auto p-3 pr-12 font-mono text-xs leading-relaxed">
+        <code>{highlightDocsCode(children, language)}</code>
+      </pre>
+    </div>
   );
 }
 
@@ -63,8 +92,8 @@ function FilePreview({ script }: { script: DocsClientScript }) {
           {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
         </Button>
       </div>
-      <pre className="max-h-80 overflow-auto bg-muted/30 p-3 text-xs leading-relaxed text-foreground">
-        <code>{script.content}</code>
+      <pre className="no-scrollbar max-h-80 overflow-auto bg-muted/30 p-3 font-mono text-xs leading-relaxed">
+        <code>{highlightDocsCode(script.content, "javascript")}</code>
       </pre>
     </div>
   );
@@ -107,7 +136,7 @@ export function DocsPanel({ scripts }: DocsPanelProps) {
         </Step>
 
         <Step number={2} title="Clone and install dependencies">
-          <CodeBlock>{`git clone <your-envvault-repo-url>
+          <CodeBlock language="bash">{`git clone <your-envvault-repo-url>
 cd env_vault
 npm install`}</CodeBlock>
         </Step>
@@ -120,7 +149,7 @@ npm install`}</CodeBlock>
             </code>{" "}
             (do not commit this file):
           </p>
-          <CodeBlock>{`MONGODB_URI="mongodb://localhost:27017/envvault"
+          <CodeBlock language="env">{`MONGODB_URI="mongodb://localhost:27017/envvault"
 MONGODB_DB="envvault"
 
 # 32-byte key for AES-256-GCM encryption
@@ -142,7 +171,7 @@ SESSION_SECRET="dev-session-secret-min-32-chars-long!!"`}</CodeBlock>
         </Step>
 
         <Step number={4} title="Start the app">
-          <CodeBlock>{`npm run dev`}</CodeBlock>
+          <CodeBlock language="bash">{`npm run dev`}</CodeBlock>
           <p>
             Open{" "}
             <code className="rounded bg-muted px-1 py-0.5 text-xs text-foreground">
@@ -201,7 +230,7 @@ SESSION_SECRET="dev-session-secret-min-32-chars-long!!"`}</CodeBlock>
         </Step>
 
         <Step number={2} title="Create .envvault.json in your app">
-          <CodeBlock>{`{
+          <CodeBlock language="json">{`{
   "decryptionKey": "wdk_your_workspace_key_here",
   "fileLink": "vl_your_file_link_here",
   "baseUrl": "http://localhost:3000"
@@ -222,23 +251,23 @@ SESSION_SECRET="dev-session-secret-min-32-chars-long!!"`}</CodeBlock>
             .
           </p>
           <p>Or use environment variables instead:</p>
-          <CodeBlock>{`export ENVVAULT_DECRYPTION_KEY="wdk_..."
+          <CodeBlock language="bash">{`export ENVVAULT_DECRYPTION_KEY="wdk_..."
 export ENVVAULT_FILE_LINK="vl_..."
 export ENVVAULT_BASE_URL="http://localhost:3000"`}</CodeBlock>
         </Step>
 
         <Step number={3} title="Load secrets at startup">
           <p>Option A — inject into process.env:</p>
-          <CodeBlock>{`const { loadEnvFromVault } = require("./envvault-bootstrap");
+          <CodeBlock language="javascript">{`const { loadEnvFromVault } = require("./envvault-bootstrap");
 
 async function main() {
   await loadEnvFromVault();
   // start Express / your server
 }`}</CodeBlock>
           <p>Option B — package.json dev script:</p>
-          <CodeBlock>{`"dev": "node envvault-run.js nodemon server.js"`}</CodeBlock>
+          <CodeBlock language="json">{`"dev": "node envvault-run.js nodemon server.js"`}</CodeBlock>
           <p>Option C — TypeScript client:</p>
-          <CodeBlock>{`import { initEnvVault, getKey } from "./env-vault";
+          <CodeBlock language="typescript">{`import { initEnvVault, getKey } from "./env-vault";
 
 await initEnvVault({
   decryptionKey: process.env.ENVVAULT_DECRYPTION_KEY!,
@@ -251,7 +280,7 @@ const openaiKey = getKey("OPENAI_KEY");`}</CodeBlock>
 
         <Step number={4} title="Verify the API (optional)">
           <p>With EnvVault running locally:</p>
-          <CodeBlock>{`curl -H "Authorization: Bearer wdk_YOUR_KEY" \\
+          <CodeBlock language="bash">{`curl -H "Authorization: Bearer wdk_YOUR_KEY" \\
   http://localhost:3000/api/v1/vault/vl_YOUR_FILE_LINK`}</CodeBlock>
           <p>
             You should get an encrypted JSON payload. The client decrypts it

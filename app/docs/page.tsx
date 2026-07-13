@@ -13,7 +13,7 @@ export default function DocsPage() {
   const scripts = getDocsClientScripts();
 
   return (
-    <div className="flex min-h-screen flex-col bg-muted/30">
+    <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b bg-background px-4 sm:px-6">
         <Link href="/login" className="flex items-center gap-2">
           <Database className="size-5 text-primary" />
