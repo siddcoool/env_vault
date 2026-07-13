@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Layout } from "../components/Layout";
 import { ProjectList } from "../components/ProjectList";
 import { ProjectDetail } from "../components/ProjectDetail";
-import { Project, ViewState, WorkspaceInfo } from "../types";
+import { DocsClientScript, Project, ViewState, WorkspaceInfo } from "../types";
 import { ThemeProvider } from "../context/ThemeContext";
 import {
   createProjectAction,
@@ -20,12 +20,14 @@ interface EnvVaultAppProps {
   initialProjects: Project[];
   workspace: WorkspaceInfo | null;
   userEmail: string;
+  docsScripts: DocsClientScript[];
 }
 
 export const EnvVaultApp: React.FC<EnvVaultAppProps> = ({
   initialProjects,
   workspace,
   userEmail,
+  docsScripts,
 }) => {
   const [view, setView] = useState<ViewState>(ViewState.DASHBOARD);
   const [projects, setProjects] = useState<Project[]>(initialProjects);
@@ -132,7 +134,7 @@ export const EnvVaultApp: React.FC<EnvVaultAppProps> = ({
             onDeleteEnv={handleDeleteEnv}
           />
         )}
-        {view === ViewState.DOCS && <DocsPanel />}
+        {view === ViewState.DOCS && <DocsPanel scripts={docsScripts} />}
         {view === ViewState.SETTINGS && workspace && (
           <SettingsPanel workspace={workspace} userEmail={userEmail} />
         )}

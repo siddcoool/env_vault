@@ -92,6 +92,10 @@ export default function LoginPage() {
             <Link href="/register" className="text-primary hover:underline">
               Create one
             </Link>
+            {" · "}
+            <Link href="/docs" className="text-primary hover:underline">
+              Docs
+            </Link>
           </p>
 
           <div className="mt-6 border-t pt-5">

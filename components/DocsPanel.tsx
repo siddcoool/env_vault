@@ -1,6 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
+import { Check, Copy } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import type { DocsClientScript } from "@/types";
 
 function Step({
   number,
@@ -32,7 +35,46 @@ function CodeBlock({ children }: { children: string }) {
   );
 }
 
-export function DocsPanel() {
+function FilePreview({ script }: { script: DocsClientScript }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(script.content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="overflow-hidden rounded-lg border">
+      <div className="flex items-start gap-3 border-b bg-muted/50 px-3 py-2">
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-mono text-sm font-medium text-foreground">
+            {script.filename}
+          </p>
+          <p className="text-xs text-muted-foreground">{script.description}</p>
+        </div>
+        <Button
+          variant="outline"
+          size="icon-sm"
+          className="shrink-0"
+          onClick={handleCopy}
+          aria-label={`Copy ${script.filename}`}
+        >
+          {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+        </Button>
+      </div>
+      <pre className="max-h-80 overflow-auto bg-muted/30 p-3 text-xs leading-relaxed text-foreground">
+        <code>{script.content}</code>
+      </pre>
+    </div>
+  );
+}
+
+interface DocsPanelProps {
+  scripts: DocsClientScript[];
+}
+
+export function DocsPanel({ scripts }: DocsPanelProps) {
   return (
     <div className="flex-1 overflow-y-auto p-6">
       <div className="mb-6">
@@ -42,7 +84,7 @@ export function DocsPanel() {
         </p>
       </div>
 
-      <div className="mb-8 max-w-2xl space-y-4">
+      <div className="mb-8 max-w-3xl space-y-4">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
           Run EnvVault on your machine
         </h2>
@@ -117,7 +159,13 @@ SESSION_SECRET="dev-session-secret-min-32-chars-long!!"`}</CodeBlock>
         <Step number={5} title="Create a project and env file">
           <ol className="list-decimal space-y-1 pl-5">
             <li>From the dashboard, create a project.</li>
-            <li>Add an env file (for example <code className="rounded bg-muted px-1 py-0.5 text-xs text-foreground">.env.local</code>) and paste your secrets.</li>
+            <li>
+              Add an env file (for example{" "}
+              <code className="rounded bg-muted px-1 py-0.5 text-xs text-foreground">
+                .env.local
+              </code>
+              ) and paste your secrets.
+            </li>
             <li>
               Copy the file link (
               <code className="rounded bg-muted px-1 py-0.5 text-xs text-foreground">
@@ -129,49 +177,27 @@ SESSION_SECRET="dev-session-secret-min-32-chars-long!!"`}</CodeBlock>
         </Step>
       </div>
 
-      <div className="max-w-2xl space-y-4">
+      <div className="max-w-3xl space-y-4">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
           Connect your own app (local)
         </h2>
 
         <Step number={1} title="Copy client scripts into your app root">
-          <p>From this repo, copy the files you need:</p>
-          <ul className="list-disc space-y-1 pl-5">
-            <li>
-              <code className="rounded bg-muted px-1 py-0.5 text-xs text-foreground">
-                envvault-shared.js
-              </code>{" "}
-              — fetch, decrypt, inject into{" "}
-              <code className="rounded bg-muted px-1 py-0.5 text-xs text-foreground">
-                process.env
-              </code>
-            </li>
-            <li>
-              <code className="rounded bg-muted px-1 py-0.5 text-xs text-foreground">
-                envvault-bootstrap.js
-              </code>{" "}
-              — bootstrap helper
-            </li>
-            <li>
-              <code className="rounded bg-muted px-1 py-0.5 text-xs text-foreground">
-                envvault-run.js
-              </code>{" "}
-              — load env, then run{" "}
-              <code className="rounded bg-muted px-1 py-0.5 text-xs text-foreground">
-                nodemon
-              </code>{" "}
-              /{" "}
-              <code className="rounded bg-muted px-1 py-0.5 text-xs text-foreground">
-                node
-              </code>
-            </li>
-            <li>
-              Or TypeScript:{" "}
-              <code className="rounded bg-muted px-1 py-0.5 text-xs text-foreground">
-                client/env-vault.ts
-              </code>
-            </li>
-          </ul>
+          <p>
+            Copy these files into your app root. Preview and copy each file
+            below:
+          </p>
+          <div className="space-y-3">
+            {scripts.map((script) => (
+              <FilePreview key={script.filename} script={script} />
+            ))}
+          </div>
+          <p>
+            Or TypeScript:{" "}
+            <code className="rounded bg-muted px-1 py-0.5 text-xs text-foreground">
+              client/env-vault.ts
+            </code>
+          </p>
         </Step>
 
         <Step number={2} title="Create .envvault.json in your app">

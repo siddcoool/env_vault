@@ -31,3 +31,9 @@ export interface UserInfo {
   email: string;
   name?: string;
 }
+
+export interface DocsClientScript {
+  filename: string;
+  description: string;
+  content: string;
+}
