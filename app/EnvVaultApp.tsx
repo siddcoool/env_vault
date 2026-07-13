@@ -14,6 +14,7 @@ import {
   deleteEnvFileAction,
 } from "./actions";
 import { SettingsPanel } from "../components/SettingsPanel";
+import { DocsPanel } from "../components/DocsPanel";
 
 interface EnvVaultAppProps {
   initialProjects: Project[];
@@ -66,6 +67,11 @@ export const EnvVaultApp: React.FC<EnvVaultAppProps> = ({
     setSelectedProject(null);
   };
 
+  const handleNavigateDocs = () => {
+    setView(ViewState.DOCS);
+    setSelectedProject(null);
+  };
+
   const handleAddEnv = (projectId: string, name: string) => {
     const data = new FormData();
     data.append("projectId", projectId);
@@ -100,9 +106,11 @@ export const EnvVaultApp: React.FC<EnvVaultAppProps> = ({
         selectedProjectId={currentSelected?.id ?? null}
         onNavigateHome={handleNavigateHome}
         onNavigateSettings={handleNavigateSettings}
+        onNavigateDocs={handleNavigateDocs}
         onSelectProject={handleSelectProject}
         isHome={view === ViewState.DASHBOARD}
         isSettings={view === ViewState.SETTINGS}
+        isDocs={view === ViewState.DOCS}
         currentProjectName={currentSelected?.name}
         workspaceName={workspace?.name}
         userEmail={userEmail}
@@ -124,6 +132,7 @@ export const EnvVaultApp: React.FC<EnvVaultAppProps> = ({
             onDeleteEnv={handleDeleteEnv}
           />
         )}
+        {view === ViewState.DOCS && <DocsPanel />}
         {view === ViewState.SETTINGS && workspace && (
           <SettingsPanel workspace={workspace} userEmail={userEmail} />
         )}

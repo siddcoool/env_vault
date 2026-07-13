@@ -20,9 +20,11 @@ interface LayoutProps {
   selectedProjectId: string | null;
   onNavigateHome: () => void;
   onNavigateSettings: () => void;
+  onNavigateDocs: () => void;
   onSelectProject: (project: Project) => void;
   isHome: boolean;
   isSettings: boolean;
+  isDocs: boolean;
   currentProjectName?: string;
   workspaceName?: string;
   userEmail?: string;
@@ -34,9 +36,11 @@ export const Layout: React.FC<LayoutProps> = ({
   selectedProjectId,
   onNavigateHome,
   onNavigateSettings,
+  onNavigateDocs,
   onSelectProject,
   isHome,
   isSettings,
+  isDocs,
   currentProjectName,
   workspaceName,
   userEmail,
@@ -50,8 +54,10 @@ export const Layout: React.FC<LayoutProps> = ({
         selectedProjectId={selectedProjectId}
         isHome={isHome}
         isSettings={isSettings}
+        isDocs={isDocs}
         onNavigateHome={onNavigateHome}
         onNavigateSettings={onNavigateSettings}
+        onNavigateDocs={onNavigateDocs}
         onSelectProject={onSelectProject}
         workspaceName={workspaceName}
         userEmail={userEmail}
@@ -67,7 +73,19 @@ export const Layout: React.FC<LayoutProps> = ({
             >
               Projects
             </button>
-            {!isHome && !isSettings && currentProjectName && (
+            {isDocs && (
+              <>
+                <span className="mx-1 opacity-40">/</span>
+                <span className="text-foreground font-medium">Docs</span>
+              </>
+            )}
+            {isSettings && (
+              <>
+                <span className="mx-1 opacity-40">/</span>
+                <span className="text-foreground font-medium">Settings</span>
+              </>
+            )}
+            {!isHome && !isSettings && !isDocs && currentProjectName && (
               <>
                 <span className="mx-1 opacity-40">/</span>
                 <span className="text-foreground font-medium">{currentProjectName}</span>

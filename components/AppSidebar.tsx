@@ -1,6 +1,6 @@
 "use client";
 
-import { Database, FolderOpen, LayoutDashboard, Settings } from "lucide-react";
+import { BookOpen, Database, FolderOpen, LayoutDashboard, Settings } from "lucide-react";
 import { Project } from "@/types";
 import {
   formatRelativeTime,
@@ -26,8 +26,10 @@ interface AppSidebarProps {
   selectedProjectId: string | null;
   isHome: boolean;
   isSettings: boolean;
+  isDocs: boolean;
   onNavigateHome: () => void;
   onNavigateSettings: () => void;
+  onNavigateDocs: () => void;
   onSelectProject: (project: Project) => void;
   workspaceName?: string;
   userEmail?: string;
@@ -38,8 +40,10 @@ export function AppSidebar({
   selectedProjectId,
   isHome,
   isSettings,
+  isDocs,
   onNavigateHome,
   onNavigateSettings,
+  onNavigateDocs,
   onSelectProject,
   workspaceName,
   userEmail,
@@ -75,6 +79,16 @@ export function AppSidebar({
                 >
                   <LayoutDashboard />
                   <span>Projects</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={isDocs}
+                  onClick={onNavigateDocs}
+                  tooltip="Docs"
+                >
+                  <BookOpen />
+                  <span>Docs</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>

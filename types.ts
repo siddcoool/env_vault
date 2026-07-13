@@ -18,6 +18,7 @@ export enum ViewState {
   DASHBOARD = "DASHBOARD",
   PROJECT_DETAIL = "PROJECT_DETAIL",
   SETTINGS = "SETTINGS",
+  DOCS = "DOCS",
 }
 
 export interface WorkspaceInfo {
