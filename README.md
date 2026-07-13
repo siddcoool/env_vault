@@ -2,7 +2,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## EnvVault client scripts
 
-Use these in **any Node / Express project** (copy to your app root):
+Use these in **any Node / Express project** (copy to your app root): 
 
 | Script | Purpose |
 |--------|---------|
