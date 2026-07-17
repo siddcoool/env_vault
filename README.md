@@ -2,14 +2,16 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## EnvVault client scripts
 
-Use these in **any Node / Express project** (copy to your app root): 
+Use these in **any Node / Express project** (copy to your app root):
 
 | Script | Purpose |
 |--------|---------|
 | `sync-script.js` | Upload local `.env*` files to EnvVault |
 | `load-script.js` | Fetch and print / validate vault env (no file written) |
-| `envvault-run.js` | Load env from vault, then run `nodemon` / `node` |
-| `envvault-bootstrap.js` | `require()` in server.js to inject into `process.env` |
+| `envvault-shared.js` | Fetch, decrypt, cache in global in-memory vault |
+| `envvault-bootstrap.js` | `require()` in server.js — `loadEnvFromVault` + `getKey` |
+
+Secrets are stored in a process-wide global. Use `getKey("NAME")`, not `process.env`.
 
 **Express setup guide:** [docs/express-setup.md](docs/express-setup.md)
 

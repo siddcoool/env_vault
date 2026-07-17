@@ -7,15 +7,11 @@ export type { DocsClientScript };
 const SCRIPT_DEFS = [
   {
     filename: "envvault-shared.js",
-    description: "Fetch, decrypt, inject into process.env",
+    description: "Fetch, decrypt, cache in global in-memory vault",
   },
   {
     filename: "envvault-bootstrap.js",
-    description: "Bootstrap helper",
-  },
-  {
-    filename: "envvault-run.js",
-    description: "Load env, then run nodemon / node",
+    description: "Bootstrap helper — loadEnvFromVault + getKey",
   },
 ] as const;
 

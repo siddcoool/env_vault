@@ -1,16 +1,22 @@
 /**
  * EnvVault bootstrap for Express (and other Node apps).
  *
- * Call loadEnvFromVault() before app.listen() or any code that reads process.env.
- * Does not write a .env file — values exist in memory only.
+ * Call loadEnvFromVault() once in your entrypoint, then use getKey("NAME")
+ * anywhere instead of process.env.NAME. Secrets stay in a process-wide global.
  *
  * CommonJS:
- *   const { loadEnvFromVault } = require("./envvault-bootstrap");
+ *   const { loadEnvFromVault, getKey } = require("./envvault-bootstrap");
+ *
+ *   async function main() {
+ *     await loadEnvFromVault();
+ *     const dbUrl = getKey("DATABASE_URL");
+ *     // start Express / your server
+ *   }
  *
  * ESM (with createRequire):
  *   import { createRequire } from "module";
  *   const require = createRequire(import.meta.url);
- *   const { loadEnvFromVault } = require("./envvault-bootstrap");
+ *   const { loadEnvFromVault, getKey } = require("./envvault-bootstrap");
  */
 
 module.exports = require("./envvault-shared");
