@@ -1,16 +1,17 @@
 # EnvVault + Express setup
 
-Load environment variables from EnvVault at runtime using the Vault client pattern.
+Load secrets from EnvVault at runtime into a process-wide in-memory vault.
+Use `getKey("NAME")` instead of `process.env.NAME`.
 
 ## How it works
 
 ```text
-npm run dev
-    → envvault-run.js (or bootstrap in server.js)
+node server.js
+    → loadEnvFromVault() / initEnvVault() in entrypoint
     → GET /api/v1/vault/{fileLink}
     → decrypt with workspace decryption key (wdk_...)
-    → process.env.KEY = value  (in memory only)
-    → nodemon / node starts Express
+    → store in global in-memory vault
+    → getKey("DATABASE_URL") anywhere in the app
 ```
 
 ## Prerequisites
@@ -25,9 +26,8 @@ npm run dev
 
 | File | Purpose |
 |------|---------|
-| `envvault-shared.js` | Vault class, fetch, decrypt, inject into `process.env` |
-| `envvault-bootstrap.js` | Re-exports shared helpers |
-| `envvault-run.js` | Load env, then run `nodemon` / `node` |
+| `envvault-shared.js` | Vault class, fetch, decrypt, global in-memory cache |
+| `envvault-bootstrap.js` | Re-exports shared helpers (`loadEnvFromVault`, `getKey`, …) |
 | `load-script.js` | Optional CLI to validate vault access |
 
 ### 2. Create `.envvault.json`
@@ -40,7 +40,7 @@ npm run dev
 }
 ```
 
-Or set environment variables:
+Or set environment variables for **client config only** (not your app secrets):
 
 ```bash
 export ENVVAULT_DECRYPTION_KEY="wdk_..."
@@ -50,40 +50,37 @@ export ENVVAULT_BASE_URL="https://your-envvault.example.com"
 
 Add `.envvault.json` to `.gitignore`.
 
-### 3. Use the Vault class directly
+### 3. Load once in your entrypoint, then use `getKey`
 
 ```javascript
-const { Vault } = require("./envvault-shared");
+const { loadEnvFromVault, getKey, requireKey } = require("./envvault-bootstrap");
 
 async function main() {
-  const vault = new Vault({
-    decryptionKey: process.env.ENVVAULT_DECRYPTION_KEY,
-    fileLink: process.env.ENVVAULT_FILE_LINK,
-    baseUrl: process.env.ENVVAULT_BASE_URL,
+  await loadEnvFromVault();
+
+  const openaiKey = getKey("OPENAI_KEY");
+  const dbUrl = requireKey("DATABASE_URL");
+
+  // start Express / your server
+}
+
+main();
+```
+
+Or with an explicit config object:
+
+```javascript
+const { initEnvVault, getKey } = require("./envvault-bootstrap");
+
+async function main() {
+  await initEnvVault({
+    decryptionKey: "wdk_...",
+    fileLink: "vl_...",
+    baseUrl: "https://your-envvault.example.com",
   });
 
-  await vault.init();
-
-  // Use instead of process.env
-  const openaiKey = vault.getKey("OPENAI_KEY");
+  const openaiKey = getKey("OPENAI_KEY");
 }
-```
-
-### 4. Or inject into process.env at startup
-
-```javascript
-const { loadEnvFromVault } = require("./envvault-bootstrap");
-
-async function main() {
-  await loadEnvFromVault(); // injects into process.env
-  // ... express app
-}
-```
-
-### 5. package.json dev script
-
-```json
-"dev": "node envvault-run.js nodemon server.js"
 ```
 
 ## TypeScript client

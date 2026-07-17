@@ -257,16 +257,15 @@ export ENVVAULT_BASE_URL="http://localhost:3000"`}</CodeBlock>
         </Step>
 
         <Step number={3} title="Load secrets at startup">
-          <p>Option A — inject into process.env:</p>
-          <CodeBlock language="javascript">{`const { loadEnvFromVault } = require("./envvault-bootstrap");
+          <p>Option A — JavaScript (in-memory vault + getKey):</p>
+          <CodeBlock language="javascript">{`const { loadEnvFromVault, getKey } = require("./envvault-bootstrap");
 
 async function main() {
   await loadEnvFromVault();
+  const openaiKey = getKey("OPENAI_KEY");
   // start Express / your server
 }`}</CodeBlock>
-          <p>Option B — package.json dev script:</p>
-          <CodeBlock language="json">{`"dev": "node envvault-run.js nodemon server.js"`}</CodeBlock>
-          <p>Option C — TypeScript client:</p>
+          <p>Option B — TypeScript client:</p>
           <CodeBlock language="typescript">{`import { initEnvVault, getKey } from "./env-vault";
 
 await initEnvVault({
