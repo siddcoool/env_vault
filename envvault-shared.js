@@ -1,6 +1,8 @@
 /**
- * Shared EnvVault client utilities for load/run scripts.
- * Zero npm dependencies — copy this file with load-script.js / envvault-bootstrap.js.
+ * Shared EnvVault client — fetch, decrypt, cache in a process-wide global.
+ * Zero npm dependencies — copy this file with envvault-bootstrap.js.
+ *
+ * Secrets live in memory only. Use getKey("NAME") instead of process.env.NAME.
  */
 
 const crypto = require("crypto");
@@ -10,6 +12,11 @@ const path = require("path");
 const DEFAULT_BASE_URL = "https://env.classyendeavors.com";
 const CONFIG_FILE = ".envvault.json";
 const DECRYPTION_KEY_PREFIX = "wdk_";
+const GLOBAL_KEY = "__ENVVAULT_INSTANCE__";
+
+function globalStore() {
+  return globalThis;
+}
 
 function readJsonConfig(cwd) {
   const configPath = path.join(cwd, CONFIG_FILE);
@@ -92,6 +99,10 @@ class Vault {
     this.baseUrl = config.baseUrl.replace(/\/$/, "");
     this.values = {};
     this.initialized = false;
+    this.name = null;
+    this.updatedAt = null;
+
+    globalStore()[GLOBAL_KEY] = this;
   }
 
   async init() {
@@ -107,60 +118,100 @@ class Vault {
 
     const json = decryptWithWorkspaceKey(body.encrypted, this.decryptionKey);
     this.values = parseValuesJson(json);
+    this.name = body.name ?? null;
+    this.updatedAt = body.updatedAt ?? null;
     this.initialized = true;
+    return this;
   }
 
   getKey(name) {
-    if (!this.initialized) {
-      throw new Error("Vault not initialized. Call await vault.init() first.");
-    }
+    this.assertReady();
     return this.values[name];
   }
 
-  getAll() {
-    if (!this.initialized) {
-      throw new Error("Vault not initialized. Call await vault.init() first.");
+  requireKey(name) {
+    const value = this.getKey(name);
+    if (value === undefined) {
+      throw new Error(`EnvVault: missing required key "${name}"`);
     }
+    return value;
+  }
+
+  getAll() {
+    this.assertReady();
     return { ...this.values };
+  }
+
+  async refresh() {
+    this.initialized = false;
+    return this.init();
+  }
+
+  assertReady() {
+    if (!this.initialized) {
+      throw new Error("Vault not initialized. Call await initEnvVault() / loadEnvFromVault() first.");
+    }
   }
 }
 
+function vault() {
+  const instance = globalStore()[GLOBAL_KEY];
+  if (!instance) {
+    throw new Error(
+      "EnvVault not initialized. Call await initEnvVault(...) or loadEnvFromVault() first.",
+    );
+  }
+  return instance;
+}
+
+function getKey(name) {
+  return vault().getKey(name);
+}
+
+function requireKey(name) {
+  return vault().requireKey(name);
+}
+
+/**
+ * Create the global vault and load secrets into memory.
+ * Call once in your server entrypoint.
+ */
+async function initEnvVault(config) {
+  const instance = new Vault(config);
+  await instance.init();
+  return instance;
+}
+
 async function fetchEnvFromVault(config) {
-  const vault = new Vault(config);
-  await vault.init();
-  const parsed = vault.getAll();
+  const instance = new Vault(config);
+  await instance.init();
+  const parsed = instance.getAll();
 
   return {
     fileLink: config.fileLink,
+    name: instance.name,
+    updatedAt: instance.updatedAt,
     parsed,
     values: parsed,
   };
 }
 
-function applyEnvToProcess(parsed, { overwrite = true } = {}) {
-  let count = 0;
-
-  for (const [key, value] of Object.entries(parsed)) {
-    if (!overwrite && key in process.env) continue;
-    process.env[key] = value;
-    count += 1;
-  }
-
-  process.env.ENVVAULT_LOADED = "1";
-  return count;
-}
-
 /**
- * Fetches env from EnvVault and injects values into process.env (runtime only).
+ * Fetches env from EnvVault and stores values in the global in-memory vault.
+ * Does not write to process.env or a .env file.
  */
-async function loadEnvFromVault(cwd = process.cwd(), options = {}) {
+async function loadEnvFromVault(cwd = process.cwd()) {
   const config = loadConfig(cwd);
-  const result = await fetchEnvFromVault(config);
-  const count = applyEnvToProcess(result.parsed, options);
+  const instance = await initEnvVault(config);
+  const parsed = instance.getAll();
 
   return {
-    ...result,
-    keysLoaded: count,
+    fileLink: config.fileLink,
+    name: instance.name,
+    updatedAt: instance.updatedAt,
+    parsed,
+    values: parsed,
+    keysLoaded: Object.keys(parsed).length,
   };
 }
 
@@ -171,6 +222,9 @@ module.exports = {
   loadConfig,
   fetchEnvFromVault,
   decryptWithWorkspaceKey,
-  applyEnvToProcess,
+  initEnvVault,
   loadEnvFromVault,
+  vault,
+  getKey,
+  requireKey,
 };
